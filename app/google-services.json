@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "858391023132",
+    "project_id": "studywithswu",
+    "storage_bucket": "studywithswu.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:858391023132:android:a189357842026f4de399d9",
+        "android_client_info": {
+          "package_name": "com.example.studywithswu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBV58HBQ1ZvP2sIVnwDoBO9ghYKG7xIZ-0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,90 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="horizontal" >
+    android:layout_height="match_parent">
 
-    <!-- 좌측: 과목당 공부 시간 리스트-->
-
-    <!-- 중앙: 날짜와 이동 버튼 -->
-
-    <!-- 우측: 타임테이블 -->
-
-    <LinearLayout
-        android:layout_width="227dp"
+    <!-- 날짜와 버튼 -->
+    <Button
+        android:id="@+id/prevButton"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:gravity="center_horizontal"
-        android:orientation="vertical">
+        android:text="<"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintMarginStart="16dp"
+        app:layout_constraintMarginTop="16dp" />
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-        </LinearLayout>
+    <TextView
+        android:id="@+id/dateTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="2025-01-01"
+        android:textSize="34sp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@id/prevButton"
+        app:layout_constraintEnd_toStartOf="@id/nextButton"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintMarginStart="8dp"
+        app:layout_constraintMarginEnd="8dp"
+        app:layout_constraintMarginTop="16dp" />
 
-        <TextView
-            android:id="@+id/dateTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:text="2025-01-01"
-            android:textSize="18sp" />
+    <Button
+        android:id="@+id/nextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=">"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintMarginEnd="16dp"
+        app:layout_constraintMarginTop="16dp" />
 
-    </LinearLayout>
-
-    <ListView
-        android:id="@+id/subjectListView"
-        android:layout_width="118dp"
-        android:layout_height="672dp"
-        android:layout_weight="1"
-        android:dividerHeight="8dp">
-
-        <Button
-            android:id="@+id/prevButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="<" />
-    </ListView>
-
+    <!-- 하단: 과목당 공부 시간 리스트와 타임테이블 -->
     <LinearLayout
-        android:id="@+id/timetableLayout"
         android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:background="@android:color/white"
-        android:padding="8dp">
+        android:layout_height="0dp"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/dateTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-        <!-- 시간 블록 1 -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
+        <!-- 좌측: 과목당 공부 시간 리스트 -->
+        <ListView
+            android:id="@+id/subjectListView"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="#FFC0C0" />
+            android:dividerHeight="8dp"
+            android:padding="8dp" />
 
-        <!-- 시간 블록 2 -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="19dp"
+        <!-- 우측: 타임테이블 -->
+        <GridLayout
+            android:id="@+id/timetableGrid"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="#FFFFC0" />
-
-        <!-- 시간 블록 3 -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:background="#C0FFC0" />
-
-        <Button
-            android:id="@+id/nextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=">" />
-
+            android:padding="8dp"
+            android:columnCount="24"
+            android:rowCount="7"
+            android:background="@android:color/white">
+        </GridLayout>
     </LinearLayout>
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

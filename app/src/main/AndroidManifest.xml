@@ -10,7 +10,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.StudywithSWU"
+        android:theme="@style/Theme.StudyWithSWU"
         tools:targetApi="31">
         <activity
             android:name=".EditProfile"
@@ -25,8 +25,12 @@
             android:name=".MainActivity"
             android:exported="true" />
         <activity
+            android:name=".CalendarView"
+            android:exported="false" />
+        <activity
             android:name=".AuthActivity"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

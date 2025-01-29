@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.studywithswu"
+    namespace = "com.android.real_studyplanner"
     compileSdk = 35
 
     defaultConfig {
@@ -36,6 +36,9 @@ android {
 }
 
 dependencies {
+
+    implementation("androidx.material:material:1.6.0")
+
     // Firebase BOM 설정 추가
     implementation(platform("com.google.firebase:firebase-bom:32.1.1"))
 

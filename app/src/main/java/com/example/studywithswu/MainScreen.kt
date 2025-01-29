@@ -31,7 +31,7 @@ class MainScreen : AppCompatActivity() {
     private val timers = mutableListOf<TimerRunnable>()
     private val db = FirebaseFirestore.getInstance()
     private val userId = "userId1"
-
+    val userRef = db.collection("users").document(userId)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -194,14 +194,27 @@ class MainScreen : AppCompatActivity() {
             totalTimerTextView.text = formatTime(totalTime)
             updateImageBasedOnTime(totalTime)
         }
-        val hours = totalTime / 1000 / 60 / 60
-        // 4, 8, 12, 16, 20, 24시간 도달 시 Firestore 업데이트
-        val badgeHours = listOf(4, 8, 12, 16, 20, 24)
-        for (h in badgeHours) {
-            if (hours >= h) {
-                addBadgeToFirestore(userId, h)
-            }
+    }
+
+    // 타이머에서 경과된 시간이 4, 8, 12, 16, 20, 24시간에 맞는지 체크
+    fun checkAndUpdateBadge(elapsedTime: Long) {
+        val secondsElapsed = elapsedTime / 1000 // 경과 시간 (초 단위)
+
+        // 14400초(4시간), 28800초(8시간), 43200초(12시간), ... 기준으로 배지 추가
+        when {
+            secondsElapsed >= 14400 -> updateBadge("4hours")
+            secondsElapsed >= 28800 -> updateBadge("8hours")
+            secondsElapsed >= 43200 -> updateBadge("12hours")
+            secondsElapsed >= 57600 -> updateBadge("16hours")
+            secondsElapsed >= 72000 -> updateBadge("20hours")
+            secondsElapsed >= 86400 -> updateBadge("24hours")
         }
+    }
+
+    // Firestore의 사용자 문서에 배지 추가
+    fun updateBadge(badgeKey: String) {
+        val currentDate = getCurrentDate()  // 날짜를 가져오는 함수
+        userRef.update("badge.$badgeKey", currentDate)  // 배지에 해당 날짜 추가
     }
 
     private fun formatTime(time: Long): String {

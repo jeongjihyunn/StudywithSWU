@@ -1,6 +1,7 @@
 package com.example.studywithswu
 
 import android.app.AlertDialog
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
@@ -63,18 +64,18 @@ class MainScreen : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_setting -> {
-                val view = findViewById<View>(R.id.toolbar) // 툴바를 기준으로 PopupMenu 표시
-                showMenuOptions(view)
+                showMenuOptions(findViewById(item.itemId)) // 클릭한 메뉴 버튼의 위치에서 팝업 표시
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
     }
+
     private fun showMenuOptions(view: View) {
-        val popup = PopupMenu(this, view)
+        val popup = PopupMenu(this, view) // 클릭한 위치에서 팝업 표시
         popup.menuInflater.inflate(R.menu.menu_options, popup.menu)
 
-        // 오른쪽 상단에 메뉴 정렬 (Android 10 이상에서 필요)
+        // Android 10 이상에서 아이콘 표시
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             popup.setForceShowIcon(true)
         }
@@ -83,6 +84,8 @@ class MainScreen : AppCompatActivity() {
             when (menuItem.itemId) {
                 R.id.option_1 -> {
                     Toast.makeText(this, "'마이페이지' 선택", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, MyPage::class.java)
+                    startActivity(intent)
                     true
                 }
                 R.id.option_2 -> {
@@ -94,8 +97,6 @@ class MainScreen : AppCompatActivity() {
         }
         popup.show()
     }
-
-
 
     private fun initViews() {
         imageView = findViewById(R.id.imageView)
@@ -246,7 +247,7 @@ class MainScreen : AppCompatActivity() {
         subjectsLayout.addView(subjectLayout)
     }
 
-    private class TimerRunnable(private val timerTextView: TextView, private val onUpdate: () -> Unit) : Runnable {
+    private class TimerRunnable(val timerTextView: TextView, private val onUpdate: () -> Unit) : Runnable {
         private val handler = Handler(Looper.getMainLooper())
         private var isRunning = false
         private var elapsedTime: Long = 0
@@ -293,7 +294,7 @@ class MainScreen : AppCompatActivity() {
     }
     private fun showEditSubjectDialog(subjectTextView: TextView) {
         val builder = AlertDialog.Builder(this)
-        builder.setTitle("과목명 수정")
+        builder.setTitle("과목 수정/삭제")
 
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -303,7 +304,9 @@ class MainScreen : AppCompatActivity() {
         val input = EditText(this).apply {
             setText(subjectTextView.text.toString())
         }
-        builder.setView(input)
+        layout.addView(input)
+
+        builder.setView(layout)
 
         builder.setPositiveButton("수정") { _, _ ->
             val newSubjectName = input.text.toString().trim()
@@ -313,7 +316,30 @@ class MainScreen : AppCompatActivity() {
                 Toast.makeText(this, "과목명을 입력하세요.", Toast.LENGTH_SHORT).show()
             }
         }
-        builder.setNegativeButton("취소") { dialog, _ -> dialog.cancel() }
+
+        builder.setNegativeButton("삭제") { _, _ ->
+            deleteSubject(subjectTextView)
+        }
+
+        builder.setNeutralButton("취소") { dialog, _ -> dialog.cancel() }
+
         builder.show()
     }
+    private fun deleteSubject(subjectTextView: TextView) {
+        val parentLayout = subjectTextView.parent as? LinearLayout
+        if (parentLayout != null) {
+            subjectsLayout.removeView(parentLayout)
+
+            // 해당 과목과 연결된 타이머 찾기
+            val timerToRemove = timers.find { it.timerTextView == parentLayout.getChildAt(2) }
+            timerToRemove?.let {
+                it.stop()  // 타이머 정지만 하고 삭제하지 않음
+                updateTotalTime() // 전체 타이머 시간 업데이트
+            }
+
+            Toast.makeText(this, "과목이 삭제되었습니다. 학습 시간은 유지됩니다.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
 }

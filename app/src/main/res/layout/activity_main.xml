@@ -44,32 +44,43 @@
         app:layout_constraintMarginTop="16dp"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- 총 공부 시간 TextView (00:00:00 형식) -->
+    <TextView
+        android:id="@+id/totalStudyTimeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="00:00:00"
+        android:textSize="30sp"
+        app:layout_constraintTop_toBottomOf="@id/dateTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintMarginTop="16dp" />
+
     <!-- 하단: 과목당 공부 시간 리스트와 타임테이블 -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/dateTextView"
+        app:layout_constraintTop_toBottomOf="@id/totalStudyTimeTextView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <!-- 좌측: 과목당 공부 시간 리스트 -->
-
-        <!-- 우측: 타임테이블 -->
         <ListView
             android:id="@+id/subjectListView"
-            android:layout_width="0dp"
+            android:layout_width="102dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:dividerHeight="8dp"
             android:padding="8dp" />
 
+        <!-- 우측: 타임테이블 -->
         <GridLayout
             android:id="@+id/timetableGrid"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_weight="2"
             android:padding="8dp"
             android:columnCount="24"
             android:rowCount="7"

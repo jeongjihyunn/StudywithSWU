@@ -1,3 +1,5 @@
+package com.android.real_studyplanner
+
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity

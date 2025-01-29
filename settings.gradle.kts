@@ -19,11 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-<<<<<<< HEAD
 rootProject.name = "StudywithSWU"
 include(":app")
-=======
-rootProject.name = "real_studyplanner"
-include(":app")
- 
->>>>>>> 0c973f5 (studyplanner)
+

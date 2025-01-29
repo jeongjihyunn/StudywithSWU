@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.appcompat.widget.Toolbar
+import com.google.firebase.firestore.FirebaseFirestore
 
 class MainScreen : AppCompatActivity() {
     private lateinit var dateTextView: TextView
@@ -28,6 +29,9 @@ class MainScreen : AppCompatActivity() {
     private val colors = listOf("#FAE9E2", "#FCE4E2", "#EAEEE0", "#EBF6FA", "#EEE8E8", "#E9CCC4", "#E1D7CD", "#D7E0E5")
     private val imageResources = listOf(R.drawable.a, R.drawable.b, R.drawable.c, R.drawable.d, R.drawable.e)
     private val timers = mutableListOf<TimerRunnable>()
+    private val db = FirebaseFirestore.getInstance()
+    private val userId = "userId1"
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -156,6 +160,7 @@ class MainScreen : AppCompatActivity() {
     }
 
     private fun updateImageBasedOnTime(totalTime: Long) {
+
         val seconds = (totalTime / 1000).toInt()
         val imageIndex = when {
             seconds >= 20 -> 4
@@ -166,12 +171,36 @@ class MainScreen : AppCompatActivity() {
         }
         imageView.setImageResource(imageResources[imageIndex])
     }
+    fun addBadgeToFirestore(userId: String, hours: Int) {
+        val db = FirebaseFirestore.getInstance()
+        val userRef = db.collection("users").document(userId)
 
+        // 현재 날짜 가져오기
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val currentDate = dateFormat.format(Date())
+
+        // Firestore에서 badge 필드를 업데이트
+        userRef.update("badge.${hours}hours", currentDate)
+            .addOnSuccessListener {
+                println("${hours}시간 뱃지 추가됨")
+            }
+            .addOnFailureListener { e ->
+                println("뱃지 업데이트 실패: ${e.message}")
+            }
+    }
     private fun updateTotalTime() {
         val totalTime = timers.sumOf { it.getElapsedTime() }
         runOnUiThread {
             totalTimerTextView.text = formatTime(totalTime)
             updateImageBasedOnTime(totalTime)
+        }
+        val hours = totalTime / 1000 / 60 / 60
+        // 4, 8, 12, 16, 20, 24시간 도달 시 Firestore 업데이트
+        val badgeHours = listOf(4, 8, 12, 16, 20, 24)
+        for (h in badgeHours) {
+            if (hours >= h) {
+                addBadgeToFirestore(userId, h)
+            }
         }
     }
 

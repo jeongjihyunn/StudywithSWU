@@ -45,7 +45,7 @@ class AuthActivity : AppCompatActivity() {
                     val user = auth.currentUser
                     Toast.makeText(this, "로그인 성공", Toast.LENGTH_SHORT).show()
                     // 로그인 후 메인 화면 등으로 이동
-                    val intent = Intent(this, MyPage::class.java)
+                    val intent = Intent(this, MainScreen::class.java)
                     startActivity(intent)
                     finish() // 로그인 후 해당 화면 종료
                 } else {

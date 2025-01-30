@@ -15,7 +15,10 @@ import androidx.appcompat.app.AppCompatActivity
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.appcompat.widget.Toolbar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 
 class MainScreen : AppCompatActivity() {
     private lateinit var dateTextView: TextView
@@ -23,19 +26,33 @@ class MainScreen : AppCompatActivity() {
     private lateinit var addButton: Button
     private lateinit var subjectsLayout: LinearLayout
     private lateinit var imageView: ImageView
+    private lateinit var firebaseAuth: FirebaseAuth
+    private lateinit var firestore: FirebaseFirestore
+    private var userId: String? = null
+    private var previousTotalTime: Long = 0L
     private val handler = Handler(Looper.getMainLooper())
     private var activeTimer: TimerRunnable? = null
     private var activeButton: Button? = null
     private val colors = listOf("#FAE9E2", "#FCE4E2", "#EAEEE0", "#EBF6FA", "#EEE8E8", "#E9CCC4", "#E1D7CD", "#D7E0E5")
     private val imageResources = listOf(R.drawable.a, R.drawable.b, R.drawable.c, R.drawable.d, R.drawable.e)
     private val timers = mutableListOf<TimerRunnable>()
-    private val db = FirebaseFirestore.getInstance()
-    private val userId = "userId1"
-    val userRef = db.collection("users").document(userId)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_screen)
+        firebaseAuth = FirebaseAuth.getInstance()
+        firestore = FirebaseFirestore.getInstance()
+
+        // Firebase 초기화
+        firebaseAuth = FirebaseAuth.getInstance()
+        firestore = FirebaseFirestore.getInstance()
+
+        // 로그인한 사용자 ID 가져오기
+        userId = firebaseAuth.currentUser?.uid
+
+        // Firebase에서 과목 데이터 읽어오기
+        initViews()
+        loadUserData()
 
         // 툴바 설정
         val toolbar: Toolbar = findViewById(R.id.toolbar)
@@ -46,6 +63,9 @@ class MainScreen : AppCompatActivity() {
         toolbar.setBackgroundColor(Color.TRANSPARENT)
         initViews()
         dateTextView.text = getCurrentDate()
+
+        //loadUserDataFromFirestore()
+
         addButton.setOnClickListener {
             if (subjectsLayout.parent == null) {
                 findViewById<LinearLayout>(R.id.main).addView(subjectsLayout)
@@ -116,6 +136,60 @@ class MainScreen : AppCompatActivity() {
         }
     }
 
+    private fun loadUserData() {
+        userId?.let { uid ->
+            val today = getCurrentDate()
+            val userRef = firestore.collection("users").document(uid)
+
+            // 🔹 Firestore에서 오늘 날짜의 총 학습 시간 불러오기
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val totalTimeToday = document.getLong("totalTime_$today") ?: 0L
+                    previousTotalTime = totalTimeToday
+
+                    runOnUiThread {
+                        totalTimerTextView.text = formatTime(totalTimeToday)
+                    }
+                    println("✅ Firestore에서 오늘 총 학습 시간 불러오기 성공: $totalTimeToday")
+                }
+            }.addOnFailureListener { e ->
+                println("❌ Firestore에서 총 학습 시간 불러오기 실패: ${e.message}")
+            }
+
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val subjectsList = document.get("subjects") as? List<Map<String, String>> ?: emptyList()
+
+                    runOnUiThread {
+                        subjectsLayout.removeAllViews()  // 기존 뷰 초기화 후 추가 (중복 방지)
+                        if (subjectsLayout.parent == null) {
+                            findViewById<LinearLayout>(R.id.main).addView(subjectsLayout)  // subjectsLayout을 추가해 화면에 표시
+                        }
+                        for (subject in subjectsList) {
+                            val subjectName = subject["name"] ?: "알 수 없음"
+                            val color = subject["color"] ?: "#FFFFFF"
+                            addNewSubjectTimer(subjectName, color)  // UI에 즉시 반영
+                        }
+                    }
+                    println("✅ Firestore에서 과목 목록 불러오기 성공")
+                }
+            }.addOnFailureListener { e ->
+                println("❌ Firestore에서 과목 목록 불러오기 실패: ${e.message}")
+            }
+        }
+    }
+
+
+    fun startTimer() {
+        if (activeTimer == null) {
+            activeTimer = TimerRunnable(totalTimerTextView) {
+                updateTotalTime()
+            }
+            handler.post(activeTimer!!)
+        }
+        updateTotalTime()  // 🔹 타이머 시작할 때 즉시 총합 시간 반영
+    }
+
     private fun getCurrentDate(): String {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         return dateFormat.format(Date())
@@ -163,59 +237,67 @@ class MainScreen : AppCompatActivity() {
 
         val seconds = (totalTime / 1000).toInt()
         val imageIndex = when {
-            seconds >= 20 -> 4
-            seconds >= 15 -> 3
-            seconds >= 10 -> 2
-            seconds >= 5 -> 1
+            seconds >= 16 -> 4
+            seconds >= 12 -> 3
+            seconds >= 8 -> 2
+            seconds >= 4 -> 1
             else -> 0
         }
         imageView.setImageResource(imageResources[imageIndex])
     }
-    fun addBadgeToFirestore(userId: String, hours: Int) {
-        val db = FirebaseFirestore.getInstance()
-        val userRef = db.collection("users").document(userId)
 
-        // 현재 날짜 가져오기
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val currentDate = dateFormat.format(Date())
+    // 🔹 앱 실행 시 Firestore에서 오늘 총합 시간 불러오기
+    private fun loadTotalTimeForToday() {
+        val today = getCurrentDate()
 
-        // Firestore에서 badge 필드를 업데이트
-        userRef.update("badge.${hours}hours", currentDate)
-            .addOnSuccessListener {
-                println("${hours}시간 뱃지 추가됨")
+        userId?.let { uid ->
+            val userRef = firestore.collection("users").document(uid)
+
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val firestoreTotalTime = document.getLong("totalTime_$today") ?: 0L
+
+                    // 🔹 Firestore에서 불러온 값을 previousTotalTime에 저장하여 중복 추가 방지
+                    previousTotalTime = firestoreTotalTime
+
+                    // 🔹 UI 업데이트 (이제 앱 실행 시 0이 보이지 않음)
+                    runOnUiThread {
+                        totalTimerTextView.text = formatTime(previousTotalTime)
+                    }
+                }
             }
-            .addOnFailureListener { e ->
-                println("뱃지 업데이트 실패: ${e.message}")
-            }
+        }
     }
+
     private fun updateTotalTime() {
-        val totalTime = timers.sumOf { it.getElapsedTime() }
-        runOnUiThread {
-            totalTimerTextView.text = formatTime(totalTime)
-            updateImageBasedOnTime(totalTime)
+        val today = getCurrentDate()
+        val newElapsedTime = timers.sumOf { it.getElapsedTime() }  // 🔹 모든 타이머의 합산 값
+
+        userId?.let { uid ->
+            val userRef = firestore.collection("users").document(uid)
+
+            userRef.get().addOnSuccessListener { document ->
+                val firestoreTotalTime = document.getLong("totalTime_$today") ?: 0L
+                val updatedTotalTime = firestoreTotalTime + (newElapsedTime - previousTotalTime)
+
+                userRef.set(mapOf("totalTime_$today" to updatedTotalTime), SetOptions.merge())
+                    .addOnSuccessListener {
+                        println("총합 시간 Firestore 업데이트 성공: $updatedTotalTime")
+                    }
+                    .addOnFailureListener { e ->
+                        println("총합 시간 업데이트 실패: ${e.message}")
+                    }
+
+                previousTotalTime = newElapsedTime
+                runOnUiThread {
+                    totalTimerTextView.text = formatTime(updatedTotalTime)
+                    updateImageBasedOnTime(updatedTotalTime)
+                }
+            }
         }
     }
 
-    // 타이머에서 경과된 시간이 4, 8, 12, 16, 20, 24시간에 맞는지 체크
-    fun checkAndUpdateBadge(elapsedTime: Long) {
-        val secondsElapsed = elapsedTime / 1000 // 경과 시간 (초 단위)
 
-        // 14400초(4시간), 28800초(8시간), 43200초(12시간), ... 기준으로 배지 추가
-        when {
-            secondsElapsed >= 14400 -> updateBadge("4hours")
-            secondsElapsed >= 28800 -> updateBadge("8hours")
-            secondsElapsed >= 43200 -> updateBadge("12hours")
-            secondsElapsed >= 57600 -> updateBadge("16hours")
-            secondsElapsed >= 72000 -> updateBadge("20hours")
-            secondsElapsed >= 86400 -> updateBadge("24hours")
-        }
-    }
-
-    // Firestore의 사용자 문서에 배지 추가
-    fun updateBadge(badgeKey: String) {
-        val currentDate = getCurrentDate()  // 날짜를 가져오는 함수
-        userRef.update("badge.$badgeKey", currentDate)  // 배지에 해당 날짜 추가
-    }
 
     private fun formatTime(time: Long): String {
         val seconds = (time / 1000) % 60
@@ -249,7 +331,7 @@ class MainScreen : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(400, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                 setMargins(16, 0, 16, 0)
             }
-            setOnClickListener { showEditSubjectDialog(this) }  // 클릭 시 과목명 수정 다이얼로그 실행
+            setOnClickListener { showEditSubjectDialog(this) }
         }
 
         val timerTextView = TextView(this).apply {
@@ -261,6 +343,7 @@ class MainScreen : AppCompatActivity() {
             ).apply { setMargins(16, 0, 16, 0) }
         }
 
+        // 🔥 타이머 생성 및 리스트에 추가
         val timerRunnable = TimerRunnable(timerTextView) {
             updateTotalTime()
         }
@@ -271,6 +354,7 @@ class MainScreen : AppCompatActivity() {
                 activeTimer!!.stop()
                 activeButton?.text = "시작"
             }
+
             if (activeTimer == timerRunnable) {
                 activeTimer!!.stop()
                 startStopButton.text = "시작"
@@ -287,9 +371,62 @@ class MainScreen : AppCompatActivity() {
         subjectLayout.addView(subjectTextView)
         subjectLayout.addView(timerTextView)
         subjectsLayout.addView(subjectLayout)
+
+        saveSubjectToFirestore(userId!!, subjectName, color)
     }
 
+    private fun saveSubjectToFirestore(userId: String, subjectName: String, color: String) {
+        val userRef = firestore.collection("users").document(userId)
+        val newSubject = mapOf("name" to subjectName, "color" to color)
+
+        println("🔥 Firestore 과목 추가 시작: $subjectName")
+
+        userRef.get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    println("✅ Firestore 문서 확인 완료: ${document.data}")
+
+                    // 🔹 subjects 필드를 배열로 가져오기
+                    val subjectsList = document.get("subjects") as? MutableList<Map<String, String>> ?: mutableListOf()
+
+                    // 🔹 이미 존재하는 과목인지 확인
+                    val subjectExists = subjectsList.any { it["name"] == subjectName }
+                    if (subjectExists) {
+                        println("⚠️ 이미 존재하는 과목: $subjectName (추가 X)")
+                        return@addOnSuccessListener
+                    }
+
+                    // 🔥 새 과목을 Firestore에 추가 (배열 방식)
+                    userRef.update("subjects", FieldValue.arrayUnion(newSubject))
+                        .addOnSuccessListener {
+                            println("✅ Firestore에 과목 추가 성공: $subjectName")
+                            loadUserData()  // Firestore에 저장한 후 UI 갱신
+                        }
+                        .addOnFailureListener { e ->
+                            println("❌ Firestore에 과목 추가 실패 (update 오류): ${e.message}")
+                        }
+                } else {
+                    println("⚠️ Firestore 문서가 존재하지 않음 -> 새 문서 생성")
+
+                    // 문서가 존재하지 않으면 새 문서를 만들고 subjects 필드를 추가
+                    userRef.set(mapOf("subjects" to listOf(newSubject)), SetOptions.merge())
+                        .addOnSuccessListener {
+                            println("✅ Firestore에 새 문서 생성 및 과목 추가 성공!")
+                            loadUserData()
+                        }
+                        .addOnFailureListener { e ->
+                            println("❌ Firestore에 새 문서 생성 실패: ${e.message}")
+                        }
+                }
+            }
+            .addOnFailureListener { e ->
+                println("❌ Firestore에서 사용자 문서 가져오기 실패: ${e.message}")
+            }
+    }
+
+
     private class TimerRunnable(val timerTextView: TextView, private val onUpdate: () -> Unit) : Runnable {
+
         private val handler = Handler(Looper.getMainLooper())
         private var isRunning = false
         private var elapsedTime: Long = 0
@@ -299,8 +436,9 @@ class MainScreen : AppCompatActivity() {
             if (isRunning) {
                 elapsedTime = System.currentTimeMillis() - startTime
                 timerTextView.text = formatTime(elapsedTime)
-                onUpdate()
-                handler.postDelayed(this, 100)
+                onUpdate()  // 🔹 매 초마다 총합 시간 업데이트
+
+                handler.postDelayed(this, 1000)  // 🔹 1초마다 실행
             }
         }
 
@@ -315,12 +453,13 @@ class MainScreen : AppCompatActivity() {
                 button.text = "중단"
                 handler.post(this)
             }
+            onUpdate()  // 🔹 시작/중단 시 총합 시간 즉시 반영
         }
 
         fun stop() {
             isRunning = false
             handler.removeCallbacks(this)
-            onUpdate()
+            onUpdate()  // 🔹 타이머 중지 시 총합 시간 업데이트
         }
 
         fun isRunning(): Boolean = isRunning
@@ -334,6 +473,8 @@ class MainScreen : AppCompatActivity() {
             return String.format("%02d:%02d:%02d", hours, minutes, seconds)
         }
     }
+
+
     private fun showEditSubjectDialog(subjectTextView: TextView) {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("과목 수정/삭제")
@@ -367,19 +508,54 @@ class MainScreen : AppCompatActivity() {
 
         builder.show()
     }
+
+    private fun updateSubjectInFirestore(oldName: String, newName: String) {
+        userId?.let { uid ->
+            val userRef = firestore.collection("users").document(uid)
+            userRef.get().addOnSuccessListener { document ->
+                val subjectsList = document.get("subjects") as? MutableList<Map<String, String>> ?: mutableListOf()
+
+                val updatedSubjectsList = subjectsList.map {
+                    if (it["name"] == oldName) it.toMutableMap().apply { put("name", newName) }
+                    else it
+                }
+
+                userRef.update("subjects", updatedSubjectsList)
+                    .addOnSuccessListener { println("✅ Firestore에서 과목 수정 성공: $newName") }
+                    .addOnFailureListener { e -> println("❌ Firestore에서 과목 수정 실패: ${e.message}") }
+            }
+        }
+    }
     private fun deleteSubject(subjectTextView: TextView) {
         val parentLayout = subjectTextView.parent as? LinearLayout
+        val subjectName = subjectTextView.text.toString()
+
         if (parentLayout != null) {
             subjectsLayout.removeView(parentLayout)
 
-            // 해당 과목과 연결된 타이머 찾기
-            val timerToRemove = timers.find { it.timerTextView == parentLayout.getChildAt(2) }
-            timerToRemove?.let {
-                it.stop()  // 타이머 정지만 하고 삭제하지 않음
-                updateTotalTime() // 전체 타이머 시간 업데이트
+            // 🔹 Firestore에서도 삭제
+            userId?.let { uid ->
+                val userRef = firestore.collection("users").document(uid)
+
+                userRef.get().addOnSuccessListener { document ->
+                    val subjectsList = document.get("subjects") as? MutableList<Map<String, String>> ?: mutableListOf()
+
+                    // 🔥 삭제할 과목 찾기
+                    val updatedSubjectsList = subjectsList.filter { it["name"] != subjectName }
+
+                    // 🔥 Firestore 업데이트 (과목 삭제 후 반영)
+                    userRef.update("subjects", updatedSubjectsList)
+                        .addOnSuccessListener {
+                            println("✅ Firestore에서 과목 삭제 성공: $subjectName")
+                            loadUserData()  // 🔥 Firestore에서 삭제 후 UI 업데이트
+                        }
+                        .addOnFailureListener { e ->
+                            println("❌ Firestore에서 과목 삭제 실패: ${e.message}")
+                        }
+                }
             }
 
-            Toast.makeText(this, "과목이 삭제되었습니다. 학습 시간은 유지됩니다.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "과목이 삭제되었습니다. Firestore에서도 삭제됨.", Toast.LENGTH_SHORT).show()
         }
     }
 

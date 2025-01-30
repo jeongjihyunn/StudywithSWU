@@ -168,6 +168,7 @@ class MainScreen : AppCompatActivity() {
                         for (subject in subjectsList) {
                             val subjectName = subject["name"] ?: "알 수 없음"
                             val color = subject["color"] ?: "#FFFFFF"
+                            val time = (subject["time"] as? Long) ?: 0L
                             addNewSubjectTimer(subjectName, color)  // UI에 즉시 반영
                         }
                     }
@@ -297,8 +298,6 @@ class MainScreen : AppCompatActivity() {
         }
     }
 
-
-
     private fun formatTime(time: Long): String {
         val seconds = (time / 1000) % 60
         val minutes = (time / 1000 / 60) % 60
@@ -356,16 +355,21 @@ class MainScreen : AppCompatActivity() {
             }
 
             if (activeTimer == timerRunnable) {
+                val elapsedTime = activeTimer!!.getElapsedTime()
                 activeTimer!!.stop()
                 startStopButton.text = "시작"
                 activeTimer = null
                 activeButton = null
+
+                // 🔹 타이머 종료 시 Firestore 업데이트
+                updateSubjectTimeInFirestore(subjectName, elapsedTime)
             } else {
                 activeTimer = timerRunnable
                 activeButton = startStopButton
                 activeTimer!!.toggle(startStopButton)
             }
         }
+
 
         subjectLayout.addView(startStopButton)
         subjectLayout.addView(subjectTextView)
@@ -377,38 +381,29 @@ class MainScreen : AppCompatActivity() {
 
     private fun saveSubjectToFirestore(userId: String, subjectName: String, color: String) {
         val userRef = firestore.collection("users").document(userId)
-        val newSubject = mapOf("name" to subjectName, "color" to color)
+        val newSubject = mapOf("name" to subjectName, "color" to color, "time" to 0L) // 🔹 시간 필드 추가
 
         println("🔥 Firestore 과목 추가 시작: $subjectName")
 
         userRef.get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    println("✅ Firestore 문서 확인 완료: ${document.data}")
-
-                    // 🔹 subjects 필드를 배열로 가져오기
-                    val subjectsList = document.get("subjects") as? MutableList<Map<String, String>> ?: mutableListOf()
-
-                    // 🔹 이미 존재하는 과목인지 확인
+                    val subjectsList = document.get("subjects") as? MutableList<Map<String, Any>> ?: mutableListOf()
                     val subjectExists = subjectsList.any { it["name"] == subjectName }
                     if (subjectExists) {
                         println("⚠️ 이미 존재하는 과목: $subjectName (추가 X)")
                         return@addOnSuccessListener
                     }
 
-                    // 🔥 새 과목을 Firestore에 추가 (배열 방식)
                     userRef.update("subjects", FieldValue.arrayUnion(newSubject))
                         .addOnSuccessListener {
                             println("✅ Firestore에 과목 추가 성공: $subjectName")
-                            loadUserData()  // Firestore에 저장한 후 UI 갱신
+                            loadUserData()
                         }
                         .addOnFailureListener { e ->
-                            println("❌ Firestore에 과목 추가 실패 (update 오류): ${e.message}")
+                            println("❌ Firestore에 과목 추가 실패: ${e.message}")
                         }
                 } else {
-                    println("⚠️ Firestore 문서가 존재하지 않음 -> 새 문서 생성")
-
-                    // 문서가 존재하지 않으면 새 문서를 만들고 subjects 필드를 추가
                     userRef.set(mapOf("subjects" to listOf(newSubject)), SetOptions.merge())
                         .addOnSuccessListener {
                             println("✅ Firestore에 새 문서 생성 및 과목 추가 성공!")
@@ -419,10 +414,8 @@ class MainScreen : AppCompatActivity() {
                         }
                 }
             }
-            .addOnFailureListener { e ->
-                println("❌ Firestore에서 사용자 문서 가져오기 실패: ${e.message}")
-            }
     }
+
 
 
     private class TimerRunnable(val timerTextView: TextView, private val onUpdate: () -> Unit) : Runnable {
@@ -509,23 +502,32 @@ class MainScreen : AppCompatActivity() {
         builder.show()
     }
 
-    private fun updateSubjectInFirestore(oldName: String, newName: String) {
+    private fun updateSubjectTimeInFirestore(subjectName: String, elapsedTime: Long) {
         userId?.let { uid ->
             val userRef = firestore.collection("users").document(uid)
+
             userRef.get().addOnSuccessListener { document ->
-                val subjectsList = document.get("subjects") as? MutableList<Map<String, String>> ?: mutableListOf()
+                if (document.exists()) {
+                    val subjectsList = document.get("subjects") as? MutableList<Map<String, Any>> ?: mutableListOf()
 
-                val updatedSubjectsList = subjectsList.map {
-                    if (it["name"] == oldName) it.toMutableMap().apply { put("name", newName) }
-                    else it
+                    val updatedSubjectsList = subjectsList.map {
+                        if (it["name"] == subjectName) {
+                            it.toMutableMap().apply { put("time", (it["time"] as? Long ?: 0L) + elapsedTime) }
+                        } else it
+                    }
+
+                    userRef.update("subjects", updatedSubjectsList)
+                        .addOnSuccessListener {
+                            println("✅ Firestore에서 과목 타이머 저장 성공: $subjectName -> ${elapsedTime}ms 추가")
+                        }
+                        .addOnFailureListener { e ->
+                            println("❌ Firestore에서 과목 타이머 저장 실패: ${e.message}")
+                        }
                 }
-
-                userRef.update("subjects", updatedSubjectsList)
-                    .addOnSuccessListener { println("✅ Firestore에서 과목 수정 성공: $newName") }
-                    .addOnFailureListener { e -> println("❌ Firestore에서 과목 수정 실패: ${e.message}") }
             }
         }
     }
+
     private fun deleteSubject(subjectTextView: TextView) {
         val parentLayout = subjectTextView.parent as? LinearLayout
         val subjectName = subjectTextView.text.toString()

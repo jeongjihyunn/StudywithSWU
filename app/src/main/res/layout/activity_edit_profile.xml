@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="167dp"
             android:layout_marginTop="90dp"
-            tools:srcCompat="@drawable/default_profile_image" />
+            android:src="@drawable/default_profile_image" />
 
 
         <LinearLayout

@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.Gravity
 import android.widget.GridLayout
 import android.widget.TextView
-import androidx.activity.R
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
@@ -21,26 +20,29 @@ class MainActivity : AppCompatActivity() {
         val columnCount = 24 // 하루 24시간
 
         // 타임테이블 그리드 구성
-        for (row in 0 until rowCount) {
-            for (col in 0 until columnCount) {
+        for (row in 0..rowCount) { // 0부터 시작해서 시간 표시 포함
+            for (col in 0..columnCount) { // 0부터 시작해서 시간 표시 포함
                 val textView = TextView(this).apply {
                     layoutParams = GridLayout.LayoutParams().apply {
                         rowSpec = GridLayout.spec(row, 1f)
                         columnSpec = GridLayout.spec(col, 1f)
                         width = 0
                         height = 0
+                        setMargins(1, 1, 1, 1) // 셀 간격
                     }
                     gravity = Gravity.CENTER
                     textSize = 12f
+                    setBackgroundColor(Color.WHITE) // 기본 배경색
 
-                    // 첫 번째 행에 시간 표시 (0~23시)
+                    // 첫 번째 행: 시간 표시
                     if (row == 0) {
                         text = if (col == 0) "" else "${col - 1}:00"
                         setBackgroundColor(Color.LTGRAY)
-                    } else {
-                        // 나머지 행은 빈 셀
-                        text = ""
-                        setBackgroundColor(Color.WHITE)
+                    }
+                    // 나머지 셀
+                    else {
+                        text = "" // 빈 셀
+                        setBackgroundColor(Color.parseColor("#F0F0F0"))
                     }
                 }
                 gridLayout.addView(textView)

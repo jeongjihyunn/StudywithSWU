@@ -1,13 +1,13 @@
 package com.anroid.real_studyplanner
 
-import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.time.LocalDate
 
 @Entity(tableName = "study_sessions")
-data class StudySession (
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    @ColumnInfo(name = "date") val date: Long,
-    @ColumnInfo(name = "duration") val duration: Long
+data class StudySession(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val date: Long,  // 날짜 (epoch day)
+    val startTime: Long,  // 공부 시작 시간 (epoch time)
+    val endTime: Long?,  // 공부 종료 시간 (epoch time, null 가능)
+    val duration: Long  // 공부 시간 (분 단위 등)
 )

@@ -64,7 +64,6 @@ class MainScreen : AppCompatActivity() {
 
         // 툴바 배경 투명 처리
         toolbar.setBackgroundColor(Color.TRANSPARENT)
-
         initViews()
         dateTextView.text = getCurrentDate()
 
@@ -549,6 +548,7 @@ class MainScreen : AppCompatActivity() {
             }
         }
     }
+
 
     private fun loadSubjectTimeForDate(subjectName: String, date: String) {
         userId?.let { uid ->

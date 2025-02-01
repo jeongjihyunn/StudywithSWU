@@ -1,59 +1,53 @@
-package com.anroid.mergetest
+package com.android.real_studyplanner
 
+import android.graphics.Color
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
+import android.view.Gravity
+import android.widget.GridLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
-import android.view.Menu
-import android.view.MenuItem
-import com.anroid.mergetest.databinding.ActivityMainBinding
+import com.example.studywithswu.R
 
 class MainActivity : AppCompatActivity() {
-
-    private lateinit var appBarConfiguration: AppBarConfiguration
-    private lateinit var binding: ActivityMainBinding
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main) // XML 레이아웃 파일과 연결
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        // 타임테이블 셀 추가
+        val gridLayout = findViewById<GridLayout>(R.id.timetableGrid)
+        gridLayout.removeAllViews()
 
-        setSupportActionBar(binding.toolbar)
+        val rowCount = 7 // 주간 기준으로 7일 (월~일)
+        val columnCount = 24 // 하루 24시간
 
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        appBarConfiguration = AppBarConfiguration(navController.graph)
-        setupActionBarWithNavController(navController, appBarConfiguration)
+        // 타임테이블 그리드 구성
+        for (row in 0..rowCount) { // 0부터 시작해서 시간 표시 포함
+            for (col in 0..columnCount) { // 0부터 시작해서 시간 표시 포함
+                val textView = TextView(this).apply {
+                    layoutParams = GridLayout.LayoutParams().apply {
+                        rowSpec = GridLayout.spec(row, 1f)
+                        columnSpec = GridLayout.spec(col, 1f)
+                        width = 0
+                        height = 0
+                        setMargins(1, 1, 1, 1) // 셀 간격
+                    }
+                    gravity = Gravity.CENTER
+                    textSize = 12f
+                    setBackgroundColor(Color.WHITE) // 기본 배경색
 
-        binding.fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null)
-                .setAnchorView(R.id.fab).show()
+                    // 첫 번째 행: 시간 표시
+                    if (row == 0) {
+                        text = if (col == 0) "" else "${col - 1}:00"
+                        setBackgroundColor(Color.LTGRAY)
+                    }
+                    // 나머지 셀
+                    else {
+                        text = "" // 빈 셀
+                        setBackgroundColor(Color.parseColor("#F0F0F0"))
+                    }
+                }
+                gridLayout.addView(textView)
+            }
         }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        return when (item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        return navController.navigateUp(appBarConfiguration)
-                || super.onSupportNavigateUp()
     }
 }

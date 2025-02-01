@@ -78,7 +78,7 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun navigateToMainActivity(){
-        val intent = Intent(this, MainActivity::class.java)
+        val intent = Intent(this, MainScreen::class.java)
         startActivity(intent)
         finish() //현재 액티비티를 종료하여 뒤로가기 버튼으로 다시 돌아오지 않도록
     }

@@ -6,6 +6,8 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -19,6 +21,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import io.grpc.Context
 
 class MainScreen : AppCompatActivity() {
     private lateinit var dateTextView: TextView
@@ -61,6 +64,7 @@ class MainScreen : AppCompatActivity() {
 
         // 툴바 배경 투명 처리
         toolbar.setBackgroundColor(Color.TRANSPARENT)
+
         initViews()
         dateTextView.text = getCurrentDate()
 
@@ -88,7 +92,7 @@ class MainScreen : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_setting -> {
-                showMenuOptions(findViewById(item.itemId)) // 클릭한 메뉴 버튼의 위치에서 팝업 표시
+                showMenuOptions(findViewById(item.itemId)) // 클릭한 메뉴 버튼의 위치에서 팝업 표시 true
                 true
             }
             R.id.action_studyplanner -> {
@@ -511,23 +515,55 @@ class MainScreen : AppCompatActivity() {
         userId?.let { uid ->
             val userRef = firestore.collection("users").document(uid)
 
+            // Firestore에서 사용자의 과목 데이터를 가져오기
             userRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
                     val subjectsList = document.get("subjects") as? MutableList<Map<String, Any>> ?: mutableListOf()
 
+                    val today = getCurrentDate() // 오늘 날짜 가져오기
+
+                    // 해당 과목의 시간을 날짜별로 갱신
                     val updatedSubjectsList = subjectsList.map {
                         if (it["name"] == subjectName) {
-                            it.toMutableMap().apply { put("time", (it["time"] as? Long ?: 0L) + elapsedTime) }
+                            it.toMutableMap().apply {
+                                // 기존 시간 가져오기
+                                val timeMap = it["time"] as? MutableMap<String, Long> ?: mutableMapOf()
+                                val currentTime = timeMap[today] ?: 0L
+
+                                // 날짜별로 시간 업데이트
+                                timeMap[today] = currentTime + elapsedTime
+                                put("time", timeMap)  // time 필드에 날짜별 시간 맵 저장
+                            }
                         } else it
                     }
 
+                    // Firestore에 갱신된 과목 데이터 저장
                     userRef.update("subjects", updatedSubjectsList)
                         .addOnSuccessListener {
-                            println("✅ Firestore에서 과목 타이머 저장 성공: $subjectName -> ${elapsedTime}ms 추가")
+                            println("✅ Firestore에서 과목 시간 날짜별로 저장 성공")
                         }
                         .addOnFailureListener { e ->
-                            println("❌ Firestore에서 과목 타이머 저장 실패: ${e.message}")
+                            println("❌ Firestore에서 과목 시간 날짜별로 저장 실패: ${e.message}")
                         }
+                }
+            }
+        }
+    }
+
+    private fun loadSubjectTimeForDate(subjectName: String, date: String) {
+        userId?.let { uid ->
+            val userRef = firestore.collection("users").document(uid)
+
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val subjectsList = document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
+                    val subject = subjectsList.find { it["name"] == subjectName }
+                    val timeMap = subject?.get("time") as? Map<String, Long> ?: emptyMap()
+                    val subjectTimeForDate = timeMap[date] ?: 0L
+
+                    // 화면에 표시할 수 있도록 포맷팅
+                    val formattedTime = formatTime(subjectTimeForDate)
+                    println("과목 '$subjectName'의 '$date' 총 시간: $formattedTime")
                 }
             }
         }

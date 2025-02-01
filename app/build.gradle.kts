@@ -38,6 +38,11 @@ android {
 }
 
 dependencies {
+    // Room 의존성
+    implementation(libs.androidx.room.runtime)
+    kapt("androidx.room:room-compiler:2.6.1")
+    implementation(libs.androidx.room.ktx)
+
     // Firebase BOM 설정 추가
     implementation(platform("com.google.firebase:firebase-bom:32.1.1"))
 

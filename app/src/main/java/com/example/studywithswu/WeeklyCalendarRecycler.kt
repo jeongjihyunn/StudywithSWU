@@ -64,7 +64,7 @@ class WeeklyCalendarRecycler (private val dates: List<Date>,
             holder.dateTextView.setTextColor(Color.parseColor("#8A2926"))
         }
 
-        if (selectedDate == date) {
+        if (isSameDay(selectedDate, date)) {
             // 선택된 날짜 배경색을 다르게 설정
             holder.dateTextView.setBackgroundColor(Color.parseColor("#d4d4d4"))
         } else {
@@ -74,4 +74,19 @@ class WeeklyCalendarRecycler (private val dates: List<Date>,
     }
 
     override fun getItemCount() = dates.size
+
+    // 선택한 날짜 외부에서 수정
+    fun setSelectedDate(date: Date) {
+        selectedDate = date
+        notifyDataSetChanged()
+    }
+
+    // 날짜 비교
+    private fun isSameDay(date1: Date, date2: Date): Boolean {
+        val cal1 = Calendar.getInstance().apply { time = date1 }
+        val cal2 = Calendar.getInstance().apply { time = date2 }
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH) &&
+                cal1.get(Calendar.DAY_OF_MONTH) == cal2.get(Calendar.DAY_OF_MONTH)
+    }
 }

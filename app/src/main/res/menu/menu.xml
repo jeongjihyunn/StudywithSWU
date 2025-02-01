@@ -3,15 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_setting"
-        android:title="메뉴"
-        android:icon="@drawable/menu"
-        app:showAsAction="always"
-        />
-    <item
         android:id="@+id/action_studyplanner"
         android:title="스터디 플래너"
         android:icon="@drawable/planner"
         app:showAsAction="always"
         />
+
+    <item
+        android:id="@+id/action_setting"
+        android:title="메뉴"
+        android:icon="@drawable/menu"
+        app:showAsAction="always"
+        />
+
 </menu>

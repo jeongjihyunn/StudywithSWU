@@ -1,11 +1,11 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.StudywithSWU" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.StudyWithSWU" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
         <item name="colorPrimary">@color/primary_red</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
-    <style name="Theme.StudywithSWU" parent="Base.Theme.StudywithSWU" />
+    <style name="Theme.StudyWithSWU" parent="Base.Theme.StudyWithSWU" />
 </resources>

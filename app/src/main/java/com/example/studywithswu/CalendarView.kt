@@ -30,6 +30,11 @@ class CalendarView : AppCompatActivity() {
         studyTimeTextView = findViewById(R.id.studyTimeTextView)
         
         setupCalendar()
+
+        // 주간 달력 Fragment 추가
+        supportFragmentManager.beginTransaction()
+            .add(R.id.fragmentContainer, WeeklyCalendarFragment())
+            .commit()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

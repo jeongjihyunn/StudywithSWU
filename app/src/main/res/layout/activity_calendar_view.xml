@@ -14,17 +14,10 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         />
-
-    //주간 달력 구현 확인용(추후 삭제)
-    <Button
-        android:id="@+id/weeklyCalendarButton"
+    <FrameLayout
+        android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="주간 캘린더 보기"
-        android:padding="8dp"
-        android:layout_marginTop="16dp"
-        />
-
+        android:layout_height="wrap_content" />
     <TextView
         android:id="@+id/studyTimeText"
         android:layout_width="match_parent"

@@ -13,4 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+<<<<<<< HEAD
 studywithswu-firebase-adminsdk-fbsvc-280e60a703.json
+=======
+>>>>>>> ac78163 (test)

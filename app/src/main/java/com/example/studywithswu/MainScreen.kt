@@ -495,8 +495,11 @@ class MainScreen : AppCompatActivity() {
 
         builder.setPositiveButton("수정") { _, _ ->
             val newSubjectName = input.text.toString().trim()
+            val oldSubjectName = subjectTextView.text.toString()
+
             if (newSubjectName.isNotEmpty()) {
                 subjectTextView.text = newSubjectName
+                updateSubjectNameInFirestore(oldSubjectName, newSubjectName)
             } else {
                 Toast.makeText(this, "과목명을 입력하세요.", Toast.LENGTH_SHORT).show()
             }
@@ -510,7 +513,35 @@ class MainScreen : AppCompatActivity() {
 
         builder.show()
     }
+    private fun updateSubjectNameInFirestore(oldName: String, newName: String) {
+        userId?.let { uid ->
+            val userRef = firestore.collection("users").document(uid)
 
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val subjectsList = document.get("subjects") as? MutableList<Map<String, Any>> ?: mutableListOf()
+
+                    val updatedSubjectsList = subjectsList.map {
+                        if (it["name"] == oldName) {
+                            it.toMutableMap().apply {
+                                put("name", newName)  // 🔹 이름 변경
+                            }
+                        } else it
+                    }
+
+                    userRef.update("subjects", updatedSubjectsList)
+                        .addOnSuccessListener {
+                            println("✅ Firestore에서 과목명 변경 성공: $oldName → $newName")
+                            Toast.makeText(this, "과목명이 변경되었습니다.", Toast.LENGTH_SHORT).show()
+                            loadUserData()  // UI 갱신
+                        }
+                        .addOnFailureListener { e ->
+                            println("❌ Firestore에서 과목명 변경 실패: ${e.message}")
+                        }
+                }
+            }
+        }
+    }
     private fun updateSubjectTimeInFirestore(subjectName: String, elapsedTime: Long) {
         userId?.let { uid ->
             val userRef = firestore.collection("users").document(uid)

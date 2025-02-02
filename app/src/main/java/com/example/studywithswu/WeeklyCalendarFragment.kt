@@ -1,6 +1,7 @@
 package com.example.studywithswu
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -18,6 +19,25 @@ class WeeklyCalendarFragment : Fragment() {
     private lateinit var weeklyCalendarRecycler: WeeklyCalendarRecycler
     private var calendar = Calendar.getInstance()
     private var selectedDate: Date = calendar.time // 기본 선택 날짜 = 오늘
+
+    // 날짜 변경 이벤트를 전달하는 인터페이스
+    interface OnDateSelectedListener {
+        fun onDateSelected(date: Date)
+    }
+
+    private var dateSelectedListener: OnDateSelectedListener? = null
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is OnDateSelectedListener) {
+            dateSelectedListener = context // 🔥 MainScreen에서 이벤트 받도록 설정
+        }
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        dateSelectedListener = null
+    }
 
 
     @SuppressLint("MissingInflatedId")
@@ -59,6 +79,7 @@ class WeeklyCalendarFragment : Fragment() {
         val weekDates = getWeekDates()
         weeklyCalendarRecycler = WeeklyCalendarRecycler(weekDates){ date ->
             selectedDate = date
+            dateSelectedListener?.onDateSelected(date)
         }
         weeklyCalendar.adapter = weeklyCalendarRecycler
     }

@@ -96,7 +96,7 @@ class MainScreen : AppCompatActivity() {
                 true
             }
             R.id.action_studyplanner -> {
-                val intent = Intent(this, MyPage::class.java) // 임시로 마이페이지로 이동할 수 있게 해놓음 여기 수정하면 됨
+                val intent = Intent(this, Studyplanner::class.java) // 임시로 마이페이지로 이동할 수 있게 해놓음 여기 수정하면 됨
                 startActivity(intent)
                 true
             }

@@ -12,7 +12,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import javax.security.auth.Subject
 
-class MainActivity : AppCompatActivity() {
+class Studyplanner : AppCompatActivity() {
 
     private lateinit var firestore: FirebaseFirestore
     private lateinit var subjectListView: ListView

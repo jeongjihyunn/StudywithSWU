@@ -5,19 +5,19 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".Studyplanner">
 
     <!-- 날짜와 버튼 -->
     <Button
         android:id="@+id/prevButton"
-        android:layout_width="107dp"
-        android:layout_height="45dp"
+        android:layout_width="106dp"
+        android:layout_height="46dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:background="#FFEEC9"
         android:backgroundTint="#FFEEC9"
         android:text="◂"
         android:textSize="20sp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

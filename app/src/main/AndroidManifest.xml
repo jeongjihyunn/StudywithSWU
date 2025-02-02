@@ -25,6 +25,9 @@
             android:name=".MyPage"
             android:exported="false" />
         <activity
+            android:name=".Studyplanner"
+            android:exported="false" />
+        <activity
             android:name=".RegisterActivity"
             android:exported="false" />
         <activity

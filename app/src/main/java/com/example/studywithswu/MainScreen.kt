@@ -515,41 +515,82 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
 
 
     private fun showEditSubjectDialog(subjectTextView: TextView) {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("과목 수정/삭제")
+        val subjectName = subjectTextView.text.toString()
+        val today = getCurrentDate()
 
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(50, 20, 50, 20)
-        }
+        userId?.let { uid ->
+            val userRef = firestore.collection("users").document(uid)
 
-        val input = EditText(this).apply {
-            setText(subjectTextView.text.toString())
-        }
-        layout.addView(input)
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val subjectsList = document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
+                    val subject = subjectsList.find { it["name"] == subjectName }
+                    val timeMap = subject?.get("time") as? Map<String, Long> ?: emptyMap()
+                    val studyTimeForToday = timeMap[today] ?: 0L
 
-        builder.setView(layout)
+                    val formattedTime = formatTime(studyTimeForToday)
 
-        builder.setPositiveButton("수정") { _, _ ->
-            val newSubjectName = input.text.toString().trim()
-            val oldSubjectName = subjectTextView.text.toString()
+                    // 🔥 UI에 적용
+                    val builder = AlertDialog.Builder(this)
+                    builder.setTitle("과목 수정/삭제")
 
-            if (newSubjectName.isNotEmpty()) {
-                subjectTextView.text = newSubjectName
-                updateSubjectNameInFirestore(oldSubjectName, newSubjectName)
-            } else {
-                Toast.makeText(this, "과목명을 입력하세요.", Toast.LENGTH_SHORT).show()
+                    val layout = LinearLayout(this).apply {
+                        orientation = LinearLayout.VERTICAL
+                        setPadding(50, 20, 50, 20)
+                    }
+
+                    val timeTextView = TextView(this).apply {
+                        text = "금일 누적 시간: $formattedTime"
+                        textSize = 16f
+                        setPadding(0, 10, 0, 10)
+                    }
+                    layout.addView(timeTextView)
+
+                    val input = EditText(this).apply {
+                        setText(subjectName)
+                    }
+                    layout.addView(input)
+
+                    builder.setView(layout)
+
+                    builder.setPositiveButton("수정") { _, _ ->
+                        val newSubjectName = input.text.toString().trim()
+                        if (newSubjectName.isNotEmpty()) {
+                            subjectTextView.text = newSubjectName
+                            updateSubjectNameInFirestore(subjectName, newSubjectName)
+                        } else {
+                            Toast.makeText(this, "과목명을 입력하세요.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    builder.setNegativeButton("삭제") { _, _ ->
+                        deleteSubject(subjectTextView)
+                    }
+
+                    builder.setNeutralButton("취소") { dialog, _ -> dialog.cancel() }
+
+                    builder.show()
+                }
             }
         }
-
-        builder.setNegativeButton("삭제") { _, _ ->
-            deleteSubject(subjectTextView)
-        }
-
-        builder.setNeutralButton("취소") { dialog, _ -> dialog.cancel() }
-
-        builder.show()
     }
+    private fun loadSubjectTimeForDate(subjectName: String, date: String, callback: (Long) -> Unit) {
+        userId?.let { uid ->
+            val userRef = firestore.collection("users").document(uid)
+
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val subjectsList = document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
+                    val subject = subjectsList.find { it["name"] == subjectName }
+                    val timeMap = subject?.get("time") as? Map<String, Long> ?: emptyMap()
+                    val subjectTimeForDate = timeMap[date] ?: 0L
+
+                    callback(subjectTimeForDate) // 콜백으로 데이터 전달
+                }
+            }
+        }
+    }
+
     private fun updateSubjectNameInFirestore(oldName: String, newName: String) {
         userId?.let { uid ->
             val userRef = firestore.collection("users").document(uid)

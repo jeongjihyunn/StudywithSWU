@@ -139,7 +139,7 @@ class MyPage : AppCompatActivity() {
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     val totalTime = document.getLong(totalTimeField) ?: 0  // 날짜별 totalTime 가져오기
-                    val totalHours = totalTime
+                    val totalHours = totalTime / 1000 / 3600
                     val badgeData = document.get("badge") as? Map<String, List<String>> ?: emptyMap()
 
                     val updates = mutableMapOf<String, Any>()

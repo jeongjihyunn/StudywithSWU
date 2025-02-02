@@ -23,7 +23,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import io.grpc.Context
 
-class MainScreen : AppCompatActivity() {
+class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedListener {
     private lateinit var dateTextView: TextView
     private lateinit var totalTimerTextView: TextView
     private lateinit var addButton: Button
@@ -37,7 +37,8 @@ class MainScreen : AppCompatActivity() {
     private var activeTimer: TimerRunnable? = null
     private var activeButton: Button? = null
     private val colors = listOf("#FAE9E2", "#FCE4E2", "#EAEEE0", "#EBF6FA", "#EEE8E8", "#E9CCC4", "#E1D7CD", "#D7E0E5")
-    private val imageResources = listOf(R.drawable.a, R.drawable.b, R.drawable.c, R.drawable.d, R.drawable.e)
+    private val imageResources = listOf(R.drawable.char_original, R.drawable.char_4, R.drawable.char_8,
+        R.drawable.char_12, R.drawable.char_16, R.drawable.char_20, R.drawable.char_24)
     private val timers = mutableListOf<TimerRunnable>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,6 +63,12 @@ class MainScreen : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false) // 타이틀 숨기기
 
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.calendar_container, WeeklyCalendarFragment())
+                .commit()
+        }
+
         // 툴바 배경 투명 처리
         toolbar.setBackgroundColor(Color.TRANSPARENT)
 
@@ -81,6 +88,33 @@ class MainScreen : AppCompatActivity() {
 
         // ActionBar의 타이틀을 없애고 싶으면
         supportActionBar?.setDisplayShowTitleEnabled(false)
+    }
+    override fun onDateSelected(date: Date) {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val selectedDateStr = dateFormat.format(date)
+        dateTextView.text = dateFormat.format(date)
+
+        loadTotalTimeForDate(selectedDateStr)
+    }
+    private fun loadTotalTimeForDate(date: String) {
+        userId?.let { uid ->
+            val userRef = firestore.collection("users").document(uid)
+
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val totalTimeForDate = document.getLong("totalTime_$date") ?: 0L
+
+                    // 선택한 날짜의 총 학습 시간을 UI에 반영
+                    runOnUiThread {
+                        totalTimerTextView.text = formatTime(totalTimeForDate)
+                    }
+
+                    println("Firestore에서 '$date' 총 학습 시간 불러오기 성공: $totalTimeForDate")
+                }
+            }.addOnFailureListener { e ->
+                println("Firestore에서 '$date' 총 학습 시간 불러오기 실패: ${e.message}")
+            }
+        }
     }
 
     // 메뉴 인플레이트
@@ -122,7 +156,7 @@ class MainScreen : AppCompatActivity() {
                     true
                 }
                 R.id.option_2 -> {
-                    Toast.makeText(this, "'통계' 선택", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "'캘린더' 선택", Toast.LENGTH_SHORT).show()
                     true
                 }
                 else -> false
@@ -150,7 +184,7 @@ class MainScreen : AppCompatActivity() {
             val today = getCurrentDate()
             val userRef = firestore.collection("users").document(uid)
 
-            // 🔹 Firestore에서 오늘 날짜의 총 학습 시간 불러오기
+            // Firestore에서 오늘 날짜의 총 학습 시간 불러오기
             userRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
                     val totalTimeToday = document.getLong("totalTime_$today") ?: 0L
@@ -159,10 +193,10 @@ class MainScreen : AppCompatActivity() {
                     runOnUiThread {
                         totalTimerTextView.text = formatTime(totalTimeToday)
                     }
-                    println("✅ Firestore에서 오늘 총 학습 시간 불러오기 성공: $totalTimeToday")
+                    println("Firestore에서 오늘 총 학습 시간 불러오기 성공: $totalTimeToday")
                 }
             }.addOnFailureListener { e ->
-                println("❌ Firestore에서 총 학습 시간 불러오기 실패: ${e.message}")
+                println("Firestore에서 총 학습 시간 불러오기 실패: ${e.message}")
             }
 
             userRef.get().addOnSuccessListener { document ->
@@ -181,10 +215,10 @@ class MainScreen : AppCompatActivity() {
                             addNewSubjectTimer(subjectName, color)  // UI에 즉시 반영
                         }
                     }
-                    println("✅ Firestore에서 과목 목록 불러오기 성공")
+                    println("Firestore에서 과목 목록 불러오기 성공")
                 }
             }.addOnFailureListener { e ->
-                println("❌ Firestore에서 과목 목록 불러오기 실패: ${e.message}")
+                println("Firestore에서 과목 목록 불러오기 실패: ${e.message}")
             }
         }
     }
@@ -197,7 +231,7 @@ class MainScreen : AppCompatActivity() {
             }
             handler.post(activeTimer!!)
         }
-        updateTotalTime()  // 🔹 타이머 시작할 때 즉시 총합 시간 반영
+        updateTotalTime()  // 타이머 시작할 때 즉시 총합 시간 반영
     }
 
     private fun getCurrentDate(): String {
@@ -246,17 +280,20 @@ class MainScreen : AppCompatActivity() {
     private fun updateImageBasedOnTime(totalTime: Long) {
 
         val seconds = (totalTime / 1000).toInt()
+        val hours = (totalTime / 1000 / 60 / 60).toInt()
         val imageIndex = when {
-            seconds >= 16 -> 4
-            seconds >= 12 -> 3
-            seconds >= 8 -> 2
-            seconds >= 4 -> 1
+            hours >= 24 -> 6
+            hours >= 20 -> 5
+            hours >= 16 -> 4
+            hours >= 12 -> 3
+            hours >= 8 -> 2
+            hours >= 4 -> 1
             else -> 0
         }
         imageView.setImageResource(imageResources[imageIndex])
     }
 
-    // 🔹 앱 실행 시 Firestore에서 오늘 총합 시간 불러오기
+    // 앱 실행 시 Firestore에서 오늘 총합 시간 불러오기
     private fun loadTotalTimeForToday() {
         val today = getCurrentDate()
 
@@ -267,10 +304,10 @@ class MainScreen : AppCompatActivity() {
                 if (document.exists()) {
                     val firestoreTotalTime = document.getLong("totalTime_$today") ?: 0L
 
-                    // 🔹 Firestore에서 불러온 값을 previousTotalTime에 저장하여 중복 추가 방지
+                    // Firestore에서 불러온 값을 previousTotalTime에 저장하여 중복 추가 방지
                     previousTotalTime = firestoreTotalTime
 
-                    // 🔹 UI 업데이트 (이제 앱 실행 시 0이 보이지 않음)
+                    // UI 업데이트 (이제 앱 실행 시 0이 보이지 않음)
                     runOnUiThread {
                         totalTimerTextView.text = formatTime(previousTotalTime)
                     }
@@ -478,39 +515,111 @@ class MainScreen : AppCompatActivity() {
 
 
     private fun showEditSubjectDialog(subjectTextView: TextView) {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("과목 수정/삭제")
+        val subjectName = subjectTextView.text.toString()
+        val today = getCurrentDate()
 
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(50, 20, 50, 20)
-        }
+        userId?.let { uid ->
+            val userRef = firestore.collection("users").document(uid)
 
-        val input = EditText(this).apply {
-            setText(subjectTextView.text.toString())
-        }
-        layout.addView(input)
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val subjectsList = document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
+                    val subject = subjectsList.find { it["name"] == subjectName }
+                    val timeMap = subject?.get("time") as? Map<String, Long> ?: emptyMap()
+                    val studyTimeForToday = timeMap[today] ?: 0L
 
-        builder.setView(layout)
+                    val formattedTime = formatTime(studyTimeForToday)
 
-        builder.setPositiveButton("수정") { _, _ ->
-            val newSubjectName = input.text.toString().trim()
-            if (newSubjectName.isNotEmpty()) {
-                subjectTextView.text = newSubjectName
-            } else {
-                Toast.makeText(this, "과목명을 입력하세요.", Toast.LENGTH_SHORT).show()
+                    // 🔥 UI에 적용
+                    val builder = AlertDialog.Builder(this)
+                    builder.setTitle("과목 수정/삭제")
+
+                    val layout = LinearLayout(this).apply {
+                        orientation = LinearLayout.VERTICAL
+                        setPadding(50, 20, 50, 20)
+                    }
+
+                    val timeTextView = TextView(this).apply {
+                        text = "금일 누적 시간: $formattedTime"
+                        textSize = 16f
+                        setPadding(0, 10, 0, 10)
+                    }
+                    layout.addView(timeTextView)
+
+                    val input = EditText(this).apply {
+                        setText(subjectName)
+                    }
+                    layout.addView(input)
+
+                    builder.setView(layout)
+
+                    builder.setPositiveButton("수정") { _, _ ->
+                        val newSubjectName = input.text.toString().trim()
+                        if (newSubjectName.isNotEmpty()) {
+                            subjectTextView.text = newSubjectName
+                            updateSubjectNameInFirestore(subjectName, newSubjectName)
+                        } else {
+                            Toast.makeText(this, "과목명을 입력하세요.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    builder.setNegativeButton("삭제") { _, _ ->
+                        deleteSubject(subjectTextView)
+                    }
+
+                    builder.setNeutralButton("취소") { dialog, _ -> dialog.cancel() }
+
+                    builder.show()
+                }
             }
         }
+    }
+    private fun loadSubjectTimeForDate(subjectName: String, date: String, callback: (Long) -> Unit) {
+        userId?.let { uid ->
+            val userRef = firestore.collection("users").document(uid)
 
-        builder.setNegativeButton("삭제") { _, _ ->
-            deleteSubject(subjectTextView)
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val subjectsList = document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
+                    val subject = subjectsList.find { it["name"] == subjectName }
+                    val timeMap = subject?.get("time") as? Map<String, Long> ?: emptyMap()
+                    val subjectTimeForDate = timeMap[date] ?: 0L
+
+                    callback(subjectTimeForDate) // 콜백으로 데이터 전달
+                }
+            }
         }
-
-        builder.setNeutralButton("취소") { dialog, _ -> dialog.cancel() }
-
-        builder.show()
     }
 
+    private fun updateSubjectNameInFirestore(oldName: String, newName: String) {
+        userId?.let { uid ->
+            val userRef = firestore.collection("users").document(uid)
+
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val subjectsList = document.get("subjects") as? MutableList<Map<String, Any>> ?: mutableListOf()
+
+                    val updatedSubjectsList = subjectsList.map {
+                        if (it["name"] == oldName) {
+                            it.toMutableMap().apply {
+                                put("name", newName)  // 🔹 이름 변경
+                            }
+                        } else it
+                    }
+
+                    userRef.update("subjects", updatedSubjectsList)
+                        .addOnSuccessListener {
+                            println("✅ Firestore에서 과목명 변경 성공: $oldName → $newName")
+                            Toast.makeText(this, "과목명이 변경되었습니다.", Toast.LENGTH_SHORT).show()
+                            loadUserData()  // UI 갱신
+                        }
+                        .addOnFailureListener { e ->
+                            println("❌ Firestore에서 과목명 변경 실패: ${e.message}")
+                        }
+                }
+            }
+        }
+    }
     private fun updateSubjectTimeInFirestore(subjectName: String, elapsedTime: Long) {
         userId?.let { uid ->
             val userRef = firestore.collection("users").document(uid)
@@ -601,6 +710,5 @@ class MainScreen : AppCompatActivity() {
             Toast.makeText(this, "과목이 삭제되었습니다. Firestore에서도 삭제됨.", Toast.LENGTH_SHORT).show()
         }
     }
-
 
 }

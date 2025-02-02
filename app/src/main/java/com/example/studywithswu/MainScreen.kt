@@ -23,7 +23,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import io.grpc.Context
 
-class MainScreen : AppCompatActivity() {
+class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedListener {
     private lateinit var dateTextView: TextView
     private lateinit var totalTimerTextView: TextView
     private lateinit var addButton: Button
@@ -63,6 +63,11 @@ class MainScreen : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false) // 타이틀 숨기기
 
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.calendar_container, WeeklyCalendarFragment())
+                .commit()
+        }
 
         // 툴바 배경 투명 처리
         toolbar.setBackgroundColor(Color.TRANSPARENT)
@@ -83,6 +88,33 @@ class MainScreen : AppCompatActivity() {
 
         // ActionBar의 타이틀을 없애고 싶으면
         supportActionBar?.setDisplayShowTitleEnabled(false)
+    }
+    override fun onDateSelected(date: Date) {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val selectedDateStr = dateFormat.format(date)
+        dateTextView.text = dateFormat.format(date)
+
+        loadTotalTimeForDate(selectedDateStr)
+    }
+    private fun loadTotalTimeForDate(date: String) {
+        userId?.let { uid ->
+            val userRef = firestore.collection("users").document(uid)
+
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val totalTimeForDate = document.getLong("totalTime_$date") ?: 0L
+
+                    // 🔥 선택한 날짜의 총 학습 시간을 UI에 반영
+                    runOnUiThread {
+                        totalTimerTextView.text = formatTime(totalTimeForDate)
+                    }
+
+                    println("✅ Firestore에서 '$date' 총 학습 시간 불러오기 성공: $totalTimeForDate")
+                }
+            }.addOnFailureListener { e ->
+                println("❌ Firestore에서 '$date' 총 학습 시간 불러오기 실패: ${e.message}")
+            }
+        }
     }
 
     // 메뉴 인플레이트

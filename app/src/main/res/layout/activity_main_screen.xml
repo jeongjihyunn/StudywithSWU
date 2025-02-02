@@ -21,7 +21,10 @@
         app:title=""
         app:titleTextColor="@android:color/black"/>
 
-
+    <FrameLayout
+        android:id="@+id/calendar_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
     <!-- ScrollView 추가 -->
     <ScrollView
         android:layout_width="match_parent"

@@ -104,15 +104,15 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                 if (document.exists()) {
                     val totalTimeForDate = document.getLong("totalTime_$date") ?: 0L
 
-                    // 🔥 선택한 날짜의 총 학습 시간을 UI에 반영
+                    // 선택한 날짜의 총 학습 시간을 UI에 반영
                     runOnUiThread {
                         totalTimerTextView.text = formatTime(totalTimeForDate)
                     }
 
-                    println("✅ Firestore에서 '$date' 총 학습 시간 불러오기 성공: $totalTimeForDate")
+                    println("Firestore에서 '$date' 총 학습 시간 불러오기 성공: $totalTimeForDate")
                 }
             }.addOnFailureListener { e ->
-                println("❌ Firestore에서 '$date' 총 학습 시간 불러오기 실패: ${e.message}")
+                println("Firestore에서 '$date' 총 학습 시간 불러오기 실패: ${e.message}")
             }
         }
     }
@@ -156,7 +156,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                     true
                 }
                 R.id.option_2 -> {
-                    Toast.makeText(this, "'통계' 선택", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "'캘린더' 선택", Toast.LENGTH_SHORT).show()
                     true
                 }
                 else -> false
@@ -184,7 +184,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             val today = getCurrentDate()
             val userRef = firestore.collection("users").document(uid)
 
-            // 🔹 Firestore에서 오늘 날짜의 총 학습 시간 불러오기
+            // Firestore에서 오늘 날짜의 총 학습 시간 불러오기
             userRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
                     val totalTimeToday = document.getLong("totalTime_$today") ?: 0L
@@ -193,10 +193,10 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                     runOnUiThread {
                         totalTimerTextView.text = formatTime(totalTimeToday)
                     }
-                    println("✅ Firestore에서 오늘 총 학습 시간 불러오기 성공: $totalTimeToday")
+                    println("Firestore에서 오늘 총 학습 시간 불러오기 성공: $totalTimeToday")
                 }
             }.addOnFailureListener { e ->
-                println("❌ Firestore에서 총 학습 시간 불러오기 실패: ${e.message}")
+                println("Firestore에서 총 학습 시간 불러오기 실패: ${e.message}")
             }
 
             userRef.get().addOnSuccessListener { document ->
@@ -215,10 +215,10 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                             addNewSubjectTimer(subjectName, color)  // UI에 즉시 반영
                         }
                     }
-                    println("✅ Firestore에서 과목 목록 불러오기 성공")
+                    println("Firestore에서 과목 목록 불러오기 성공")
                 }
             }.addOnFailureListener { e ->
-                println("❌ Firestore에서 과목 목록 불러오기 실패: ${e.message}")
+                println("Firestore에서 과목 목록 불러오기 실패: ${e.message}")
             }
         }
     }
@@ -231,7 +231,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             }
             handler.post(activeTimer!!)
         }
-        updateTotalTime()  // 🔹 타이머 시작할 때 즉시 총합 시간 반영
+        updateTotalTime()  // 타이머 시작할 때 즉시 총합 시간 반영
     }
 
     private fun getCurrentDate(): String {

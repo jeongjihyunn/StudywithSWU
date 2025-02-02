@@ -89,7 +89,7 @@ class WeeklyCalendarFragment : Fragment() {
         val currentDate = calendar.time
         val cal = Calendar.getInstance()
         cal.time = currentDate
-        cal.firstDayOfWeek = Calendar.MONDAY
+        cal.firstDayOfWeek = Calendar.SUNDAY
         cal.set(Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
 
         repeat(7){

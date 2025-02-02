@@ -5,5 +5,5 @@
         android:title="마이페이지" />
     <item
         android:id="@+id/option_2"
-        android:title="통계" />
+        android:title="캘린더" />
 </menu>

@@ -10,7 +10,7 @@
     android:padding="16dp"
     tools:context=".MainScreen">
 
-    <!-- 🔥 고정된 툴바 -->
+    <!-- 고정된 툴바 -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -21,7 +21,8 @@
         app:title=""
         app:titleTextColor="@android:color/black"/>
 
-    <!-- 🔥 ScrollView 추가 -->
+
+    <!-- ScrollView 추가 -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -57,7 +58,7 @@
                     android:layout_height="100dp"
                     android:layout_marginTop="16dp"
                     android:contentDescription="이미지 설명"
-                    android:src="@drawable/a"/>
+                    android:src="@drawable/char_original"/>
 
                 <TextView
                     android:id="@+id/totalTimerTextView"

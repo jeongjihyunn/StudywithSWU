@@ -37,7 +37,8 @@ class MainScreen : AppCompatActivity() {
     private var activeTimer: TimerRunnable? = null
     private var activeButton: Button? = null
     private val colors = listOf("#FAE9E2", "#FCE4E2", "#EAEEE0", "#EBF6FA", "#EEE8E8", "#E9CCC4", "#E1D7CD", "#D7E0E5")
-    private val imageResources = listOf(R.drawable.a, R.drawable.b, R.drawable.c, R.drawable.d, R.drawable.e)
+    private val imageResources = listOf(R.drawable.char_original, R.drawable.char_4, R.drawable.char_8,
+        R.drawable.char_12, R.drawable.char_16, R.drawable.char_20, R.drawable.char_24)
     private val timers = mutableListOf<TimerRunnable>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,6 +62,7 @@ class MainScreen : AppCompatActivity() {
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false) // 타이틀 숨기기
+
 
         // 툴바 배경 투명 처리
         toolbar.setBackgroundColor(Color.TRANSPARENT)
@@ -246,17 +248,20 @@ class MainScreen : AppCompatActivity() {
     private fun updateImageBasedOnTime(totalTime: Long) {
 
         val seconds = (totalTime / 1000).toInt()
+        val hours = (totalTime / 1000 / 60 / 60).toInt()
         val imageIndex = when {
-            seconds >= 16 -> 4
-            seconds >= 12 -> 3
-            seconds >= 8 -> 2
-            seconds >= 4 -> 1
+            hours >= 24 -> 6
+            hours >= 20 -> 5
+            hours >= 16 -> 4
+            hours >= 12 -> 3
+            hours >= 8 -> 2
+            hours >= 4 -> 1
             else -> 0
         }
         imageView.setImageResource(imageResources[imageIndex])
     }
 
-    // 🔹 앱 실행 시 Firestore에서 오늘 총합 시간 불러오기
+    // 앱 실행 시 Firestore에서 오늘 총합 시간 불러오기
     private fun loadTotalTimeForToday() {
         val today = getCurrentDate()
 
@@ -267,10 +272,10 @@ class MainScreen : AppCompatActivity() {
                 if (document.exists()) {
                     val firestoreTotalTime = document.getLong("totalTime_$today") ?: 0L
 
-                    // 🔹 Firestore에서 불러온 값을 previousTotalTime에 저장하여 중복 추가 방지
+                    // Firestore에서 불러온 값을 previousTotalTime에 저장하여 중복 추가 방지
                     previousTotalTime = firestoreTotalTime
 
-                    // 🔹 UI 업데이트 (이제 앱 실행 시 0이 보이지 않음)
+                    // UI 업데이트 (이제 앱 실행 시 0이 보이지 않음)
                     runOnUiThread {
                         totalTimerTextView.text = formatTime(previousTotalTime)
                     }
@@ -632,6 +637,5 @@ class MainScreen : AppCompatActivity() {
             Toast.makeText(this, "과목이 삭제되었습니다. Firestore에서도 삭제됨.", Toast.LENGTH_SHORT).show()
         }
     }
-
 
 }

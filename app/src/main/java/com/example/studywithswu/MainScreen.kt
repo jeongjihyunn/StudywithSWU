@@ -18,12 +18,13 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import java.text.SimpleDateFormat
+import java.util.*
 import androidx.appcompat.widget.Toolbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
-import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
@@ -124,15 +125,15 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                 if (document.exists()) {
                     val totalTimeForDate = document.getLong("totalTime_$date") ?: 0L
 
-                    // 선택한 날짜의 총 학습 시간을 UI에 반영
+                    // 🔥 선택한 날짜의 총 학습 시간을 UI에 반영
                     runOnUiThread {
                         totalTimerTextView.text = formatTime(totalTimeForDate)
                     }
 
-                    println("Firestore에서 '$date' 총 학습 시간 불러오기 성공: $totalTimeForDate")
+                    println("✅ Firestore에서 '$date' 총 학습 시간 불러오기 성공: $totalTimeForDate")
                 }
             }.addOnFailureListener { e ->
-                println("Firestore에서 '$date' 총 학습 시간 불러오기 실패: ${e.message}")
+                println("❌ Firestore에서 '$date' 총 학습 시간 불러오기 실패: ${e.message}")
             }
         }
     }
@@ -211,7 +212,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             val today = getCurrentDate()
             val userRef = firestore.collection("users").document(uid)
 
-            // Firestore에서 오늘 날짜의 총 학습 시간 불러오기
+            // 🔹 Firestore에서 오늘 날짜의 총 학습 시간 불러오기
             userRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
                     val totalTimeToday = document.getLong("totalTime_$today") ?: 0L
@@ -243,10 +244,10 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                             addNewSubjectTimer(subjectName, color)  // UI에 즉시 반영
                         }
                     }
-                    println("Firestore에서 과목 목록 불러오기 성공")
+                    println("✅ Firestore에서 과목 목록 불러오기 성공")
                 }
             }.addOnFailureListener { e ->
-                println("Firestore에서 과목 목록 불러오기 실패: ${e.message}")
+                println("❌ Firestore에서 과목 목록 불러오기 실패: ${e.message}")
             }
 
             // 📌 Firestore에서 start_times & stop_times 불러오기
@@ -299,7 +300,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             }
             handler.post(activeTimer!!)
         }
-        updateTotalTime()  // 타이머 시작할 때 즉시 총합 시간 반영
+        updateTotalTime()  // 🔹 타이머 시작할 때 즉시 총합 시간 반영
     }
 
     private fun getCurrentDate(): String {
@@ -459,7 +460,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             ).apply { setMargins(16, 0, 16, 0) }
         }
 
-        // 🔥 타이머 생성 및 리스트에 추가
+        // 타이머 생성 및 리스트에 추가
         val timerRunnable = TimerRunnable(timerTextView) {
             updateTotalTime()
         }
@@ -519,7 +520,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
         val userRef = firestore.collection("users").document(userId)
         val newSubject = mapOf("name" to subjectName, "color" to color, "time" to 0L) // 🔹 시간 필드 추가
 
-        println("🔥 Firestore 과목 추가 시작: $subjectName")
+        println("Firestore 과목 추가 시작: $subjectName")
 
         userRef.get()
             .addOnSuccessListener { document ->
@@ -528,26 +529,26 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                         ?: mutableListOf()
                     val subjectExists = subjectsList.any { it["name"] == subjectName }
                     if (subjectExists) {
-                        println("⚠️ 이미 존재하는 과목: $subjectName (추가 X)")
+                        println("이미 존재하는 과목: $subjectName (추가 X)")
                         return@addOnSuccessListener
                     }
 
                     userRef.update("subjects", FieldValue.arrayUnion(newSubject))
                         .addOnSuccessListener {
-                            println("✅ Firestore에 과목 추가 성공: $subjectName")
+                            println("Firestore에 과목 추가 성공: $subjectName")
                             loadUserData()
                         }
                         .addOnFailureListener { e ->
-                            println("❌ Firestore에 과목 추가 실패: ${e.message}")
+                            println("Firestore에 과목 추가 실패: ${e.message}")
                         }
                 } else {
                     userRef.set(mapOf("subjects" to listOf(newSubject)), SetOptions.merge())
                         .addOnSuccessListener {
-                            println("✅ Firestore에 새 문서 생성 및 과목 추가 성공!")
+                            println("Firestore에 새 문서 생성 및 과목 추가 성공!")
                             loadUserData()
                         }
                         .addOnFailureListener { e ->
-                            println("❌ Firestore에 새 문서 생성 실패: ${e.message}")
+                            println("Firestore에 새 문서 생성 실패: ${e.message}")
                         }
                 }
             }
@@ -708,12 +709,12 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
 
                     userRef.update("subjects", updatedSubjectsList)
                         .addOnSuccessListener {
-                            println("✅ Firestore에서 과목명 변경 성공: $oldName → $newName")
+                            println("Firestore에서 과목명 변경 성공: $oldName → $newName")
                             Toast.makeText(this, "과목명이 변경되었습니다.", Toast.LENGTH_SHORT).show()
                             loadUserData()  // UI 갱신
                         }
                         .addOnFailureListener { e ->
-                            println("❌ Firestore에서 과목명 변경 실패: ${e.message}")
+                            println("Firestore에서 과목명 변경 실패: ${e.message}")
                         }
                 }
             }
@@ -751,10 +752,10 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                     // Firestore에 갱신된 과목 데이터 저장
                     userRef.update("subjects", updatedSubjectsList)
                         .addOnSuccessListener {
-                            println("✅ Firestore에서 과목 시간 날짜별로 저장 성공")
+                            println("Firestore에서 과목 시간 날짜별로 저장 성공")
                         }
                         .addOnFailureListener { e ->
-                            println("❌ Firestore에서 과목 시간 날짜별로 저장 실패: ${e.message}")
+                            println("Firestore에서 과목 시간 날짜별로 저장 실패: ${e.message}")
                         }
                 }
             }
@@ -835,17 +836,17 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                     val subjectsList = document.get("subjects") as? MutableList<Map<String, String>>
                         ?: mutableListOf()
 
-                    // 🔥 삭제할 과목 찾기
+                    // 삭제할 과목 찾기
                     val updatedSubjectsList = subjectsList.filter { it["name"] != subjectName }
 
-                    // 🔥 Firestore 업데이트 (과목 삭제 후 반영)
+                    // Firestore 업데이트 (과목 삭제 후 반영)
                     userRef.update("subjects", updatedSubjectsList)
                         .addOnSuccessListener {
-                            println("✅ Firestore에서 과목 삭제 성공: $subjectName")
-                            loadUserData()  // 🔥 Firestore에서 삭제 후 UI 업데이트
+                            println("Firestore에서 과목 삭제 성공: $subjectName")
+                            loadUserData()  // Firestore에서 삭제 후 UI 업데이트
                         }
                         .addOnFailureListener { e ->
-                            println("❌ Firestore에서 과목 삭제 실패: ${e.message}")
+                            println("Firestore에서 과목 삭제 실패: ${e.message}")
                         }
                 }
             }

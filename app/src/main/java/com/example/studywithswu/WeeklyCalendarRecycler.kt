@@ -11,21 +11,28 @@ import java.util.Date
 import java.util.Calendar
 import android.graphics.Color
 
-class WeeklyCalendarRecycler (private val dates: List<Date>,
+class WeeklyCalendarRecycler (private var dates: List<Date>,
                               private val onDateSelected: (Date) -> Unit):
     RecyclerView.Adapter<WeeklyCalendarRecycler.CalendarViewHolder>(){
 
     private var selectedDate: Date = Calendar.getInstance().time // 기본 선택 날짜 = 오늘
+    private var selectedDayOfWeek: Int = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+    private var isWeekChanged: Boolean = false
 
     inner class CalendarViewHolder(view: View): RecyclerView.ViewHolder(view){
         val dateTextView: TextView = view.findViewById(R.id.dateTextView)
         val dayTextView: TextView = view.findViewById(R.id.dayTextView)
 
+
         init {
             view.setOnClickListener {
                 selectedDate = dates[adapterPosition]
-                onDateSelected(selectedDate) // 선택된 날짜 전달
-                notifyDataSetChanged() // UI 갱신
+                selectedDayOfWeek = Calendar.getInstance().apply {
+                    time = selectedDate
+                }.get(Calendar.DAY_OF_WEEK)
+                isWeekChanged = false
+                onDateSelected(selectedDate)
+                notifyDataSetChanged()
             }
         }
     }
@@ -64,20 +71,41 @@ class WeeklyCalendarRecycler (private val dates: List<Date>,
             holder.dateTextView.setTextColor(Color.parseColor("#8A2926"))
         }
 
-        if (isSameDay(selectedDate, date)) {
-            // 선택된 날짜 배경색을 다르게 설정
+        // 주간 이동 시에는 요일 기준으로, 그 외에는 선택된 날짜 기준으로 처리
+        if (isWeekChanged && dateCalendar.get(Calendar.DAY_OF_WEEK) == selectedDayOfWeek) {
+            selectedDate = date
             holder.dateTextView.setBackgroundColor(Color.parseColor("#d4d4d4"))
-        } else {
-            // 선택되지 않은 날짜는 기본 배경
-            holder.dateTextView.setBackgroundColor(Color.TRANSPARENT)
+        } else if (!isWeekChanged && isSameDay(date, selectedDate)) {
+            holder.dateTextView.setBackgroundColor(Color.parseColor("#d4d4d4"))
         }
     }
 
     override fun getItemCount() = dates.size
 
+    fun updateDates(newDates: List<Date>) {
+        isWeekChanged = true
+        dates = newDates
+        // 선택된 요일에 해당하는 날짜 찾기
+        val newSelectedDate = dates.find { date ->
+            Calendar.getInstance().apply {
+                time = date
+            }.get(Calendar.DAY_OF_WEEK) == selectedDayOfWeek
+        }
+        // 새로운 날짜가 있으면 선택
+        newSelectedDate?.let {
+            selectedDate = it
+            onDateSelected(it)
+        }
+        notifyDataSetChanged()
+    }
+
     // 선택한 날짜 외부에서 수정
     fun setSelectedDate(date: Date) {
         selectedDate = date
+        selectedDayOfWeek = Calendar.getInstance().apply {
+            time = date
+        }.get(Calendar.DAY_OF_WEEK)
+        isWeekChanged = false
         notifyDataSetChanged()
     }
 

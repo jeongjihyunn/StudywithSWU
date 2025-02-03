@@ -19,6 +19,7 @@ class WeeklyCalendarFragment : Fragment() {
     private lateinit var weeklyCalendarRecycler: WeeklyCalendarRecycler
     private var calendar = Calendar.getInstance()
     private var selectedDate: Date = calendar.time // 기본 선택 날짜 = 오늘
+    private var currentWeekDates: List<Date> = emptyList()
 
     // 날짜 변경 이벤트를 전달하는 인터페이스
     interface OnDateSelectedListener {
@@ -30,7 +31,7 @@ class WeeklyCalendarFragment : Fragment() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         if (context is OnDateSelectedListener) {
-            dateSelectedListener = context // 🔥 MainScreen에서 이벤트 받도록 설정
+            dateSelectedListener = context // MainScreen에서 이벤트 받도록 설정
         }
     }
 
@@ -52,8 +53,23 @@ class WeeklyCalendarFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // 저장된 선택 날짜 복원
+        savedInstanceState?.getLong("SELECTED_DATE")?.let { savedTime ->
+            selectedDate = Date(savedTime)
+        }
+
         weeklyCalendar = view.findViewById(R.id.calendarRecyclerView)
         weeklyCalendar.layoutManager = GridLayoutManager(requireContext(), 7)
+
+        // 첫 주 날짜들 초기화
+        currentWeekDates = getWeekDates()
+
+        // WeeklyCalendarRecycler 초기화
+        weeklyCalendarRecycler = WeeklyCalendarRecycler(currentWeekDates) { date ->
+            selectedDate = date  // 선택된 날짜 업데이트
+        }
+        weeklyCalendar.adapter = weeklyCalendarRecycler
+
 
         // 화살표 버튼 설정
         val prevWeekButton: ImageButton = view.findViewById(R.id.prevWeekButton)
@@ -76,12 +92,16 @@ class WeeklyCalendarFragment : Fragment() {
     }
 
     private fun updateCalendar(){
-        val weekDates = getWeekDates()
-        weeklyCalendarRecycler = WeeklyCalendarRecycler(weekDates){ date ->
-            selectedDate = date
-            dateSelectedListener?.onDateSelected(date)
+        currentWeekDates = getWeekDates()
+        if (::weeklyCalendarRecycler.isInitialized) {
+            // 기존 어댑터의 선택된 날짜를 유지하면서 새로운 주의 날짜들로 업데이트
+            weeklyCalendarRecycler.updateDates(currentWeekDates)
+        } else {
+            weeklyCalendarRecycler = WeeklyCalendarRecycler(currentWeekDates) { date ->
+                selectedDate = date
+            }
+            weeklyCalendar.adapter = weeklyCalendarRecycler
         }
-        weeklyCalendar.adapter = weeklyCalendarRecycler
     }
 
     private fun getWeekDates(): List<Date>{

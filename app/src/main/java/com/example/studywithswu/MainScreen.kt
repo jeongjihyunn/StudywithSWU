@@ -156,7 +156,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                     true
                 }
                 R.id.option_2 -> {
-                    Toast.makeText(this, "'캘린더' 선택", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "'통계' 선택", Toast.LENGTH_SHORT).show()
                     true
                 }
                 else -> false
@@ -184,7 +184,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             val today = getCurrentDate()
             val userRef = firestore.collection("users").document(uid)
 
-            // Firestore에서 오늘 날짜의 총 학습 시간 불러오기
+            // 🔹 Firestore에서 오늘 날짜의 총 학습 시간 불러오기
             userRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
                     val totalTimeToday = document.getLong("totalTime_$today") ?: 0L
@@ -231,7 +231,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             }
             handler.post(activeTimer!!)
         }
-        updateTotalTime()  // 타이머 시작할 때 즉시 총합 시간 반영
+        updateTotalTime()  // 🔹 타이머 시작할 때 즉시 총합 시간 반영
     }
 
     private fun getCurrentDate(): String {
@@ -388,7 +388,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             ).apply { setMargins(16, 0, 16, 0) }
         }
 
-        // 🔥 타이머 생성 및 리스트에 추가
+        // 타이머 생성 및 리스트에 추가
         val timerRunnable = TimerRunnable(timerTextView) {
             updateTotalTime()
         }
@@ -429,7 +429,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
         val userRef = firestore.collection("users").document(userId)
         val newSubject = mapOf("name" to subjectName, "color" to color, "time" to 0L) // 🔹 시간 필드 추가
 
-        println("🔥 Firestore 과목 추가 시작: $subjectName")
+        println("Firestore 과목 추가 시작: $subjectName")
 
         userRef.get()
             .addOnSuccessListener { document ->
@@ -437,26 +437,26 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                     val subjectsList = document.get("subjects") as? MutableList<Map<String, Any>> ?: mutableListOf()
                     val subjectExists = subjectsList.any { it["name"] == subjectName }
                     if (subjectExists) {
-                        println("⚠️ 이미 존재하는 과목: $subjectName (추가 X)")
+                        println("⚠이미 존재하는 과목: $subjectName (추가 X)")
                         return@addOnSuccessListener
                     }
 
                     userRef.update("subjects", FieldValue.arrayUnion(newSubject))
                         .addOnSuccessListener {
-                            println("✅ Firestore에 과목 추가 성공: $subjectName")
+                            println("Firestore에 과목 추가 성공: $subjectName")
                             loadUserData()
                         }
                         .addOnFailureListener { e ->
-                            println("❌ Firestore에 과목 추가 실패: ${e.message}")
+                            println("Firestore에 과목 추가 실패: ${e.message}")
                         }
                 } else {
                     userRef.set(mapOf("subjects" to listOf(newSubject)), SetOptions.merge())
                         .addOnSuccessListener {
-                            println("✅ Firestore에 새 문서 생성 및 과목 추가 성공!")
+                            println("Firestore에 새 문서 생성 및 과목 추가 성공!")
                             loadUserData()
                         }
                         .addOnFailureListener { e ->
-                            println("❌ Firestore에 새 문서 생성 실패: ${e.message}")
+                            println("Firestore에 새 문서 생성 실패: ${e.message}")
                         }
                 }
             }
@@ -515,82 +515,41 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
 
 
     private fun showEditSubjectDialog(subjectTextView: TextView) {
-        val subjectName = subjectTextView.text.toString()
-        val today = getCurrentDate()
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("과목 수정/삭제")
 
-        userId?.let { uid ->
-            val userRef = firestore.collection("users").document(uid)
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 20, 50, 20)
+        }
 
-            userRef.get().addOnSuccessListener { document ->
-                if (document.exists()) {
-                    val subjectsList = document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
-                    val subject = subjectsList.find { it["name"] == subjectName }
-                    val timeMap = subject?.get("time") as? Map<String, Long> ?: emptyMap()
-                    val studyTimeForToday = timeMap[today] ?: 0L
+        val input = EditText(this).apply {
+            setText(subjectTextView.text.toString())
+        }
+        layout.addView(input)
 
-                    val formattedTime = formatTime(studyTimeForToday)
+        builder.setView(layout)
 
-                    // 🔥 UI에 적용
-                    val builder = AlertDialog.Builder(this)
-                    builder.setTitle("과목 수정/삭제")
+        builder.setPositiveButton("수정") { _, _ ->
+            val newSubjectName = input.text.toString().trim()
+            val oldSubjectName = subjectTextView.text.toString()
 
-                    val layout = LinearLayout(this).apply {
-                        orientation = LinearLayout.VERTICAL
-                        setPadding(50, 20, 50, 20)
-                    }
-
-                    val timeTextView = TextView(this).apply {
-                        text = "금일 누적 시간: $formattedTime"
-                        textSize = 16f
-                        setPadding(0, 10, 0, 10)
-                    }
-                    layout.addView(timeTextView)
-
-                    val input = EditText(this).apply {
-                        setText(subjectName)
-                    }
-                    layout.addView(input)
-
-                    builder.setView(layout)
-
-                    builder.setPositiveButton("수정") { _, _ ->
-                        val newSubjectName = input.text.toString().trim()
-                        if (newSubjectName.isNotEmpty()) {
-                            subjectTextView.text = newSubjectName
-                            updateSubjectNameInFirestore(subjectName, newSubjectName)
-                        } else {
-                            Toast.makeText(this, "과목명을 입력하세요.", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-
-                    builder.setNegativeButton("삭제") { _, _ ->
-                        deleteSubject(subjectTextView)
-                    }
-
-                    builder.setNeutralButton("취소") { dialog, _ -> dialog.cancel() }
-
-                    builder.show()
-                }
+            if (newSubjectName.isNotEmpty()) {
+                subjectTextView.text = newSubjectName
+                updateSubjectNameInFirestore(oldSubjectName, newSubjectName)
+            } else {
+                Toast.makeText(this, "과목명을 입력하세요.", Toast.LENGTH_SHORT).show()
             }
         }
-    }
-    private fun loadSubjectTimeForDate(subjectName: String, date: String, callback: (Long) -> Unit) {
-        userId?.let { uid ->
-            val userRef = firestore.collection("users").document(uid)
 
-            userRef.get().addOnSuccessListener { document ->
-                if (document.exists()) {
-                    val subjectsList = document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
-                    val subject = subjectsList.find { it["name"] == subjectName }
-                    val timeMap = subject?.get("time") as? Map<String, Long> ?: emptyMap()
-                    val subjectTimeForDate = timeMap[date] ?: 0L
-
-                    callback(subjectTimeForDate) // 콜백으로 데이터 전달
-                }
-            }
+        builder.setNegativeButton("삭제") { _, _ ->
+            deleteSubject(subjectTextView)
         }
-    }
 
+        builder.setNeutralButton("취소") { dialog, _ -> dialog.cancel() }
+
+        builder.show()
+    }
     private fun updateSubjectNameInFirestore(oldName: String, newName: String) {
         userId?.let { uid ->
             val userRef = firestore.collection("users").document(uid)
@@ -609,12 +568,12 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
 
                     userRef.update("subjects", updatedSubjectsList)
                         .addOnSuccessListener {
-                            println("✅ Firestore에서 과목명 변경 성공: $oldName → $newName")
+                            println("Firestore에서 과목명 변경 성공: $oldName → $newName")
                             Toast.makeText(this, "과목명이 변경되었습니다.", Toast.LENGTH_SHORT).show()
                             loadUserData()  // UI 갱신
                         }
                         .addOnFailureListener { e ->
-                            println("❌ Firestore에서 과목명 변경 실패: ${e.message}")
+                            println("Firestore에서 과목명 변경 실패: ${e.message}")
                         }
                 }
             }
@@ -649,10 +608,10 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                     // Firestore에 갱신된 과목 데이터 저장
                     userRef.update("subjects", updatedSubjectsList)
                         .addOnSuccessListener {
-                            println("✅ Firestore에서 과목 시간 날짜별로 저장 성공")
+                            println("Firestore에서 과목 시간 날짜별로 저장 성공")
                         }
                         .addOnFailureListener { e ->
-                            println("❌ Firestore에서 과목 시간 날짜별로 저장 실패: ${e.message}")
+                            println("Firestore에서 과목 시간 날짜별로 저장 실패: ${e.message}")
                         }
                 }
             }
@@ -692,17 +651,17 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                 userRef.get().addOnSuccessListener { document ->
                     val subjectsList = document.get("subjects") as? MutableList<Map<String, String>> ?: mutableListOf()
 
-                    // 🔥 삭제할 과목 찾기
+                    // 삭제할 과목 찾기
                     val updatedSubjectsList = subjectsList.filter { it["name"] != subjectName }
 
-                    // 🔥 Firestore 업데이트 (과목 삭제 후 반영)
+                    // Firestore 업데이트 (과목 삭제 후 반영)
                     userRef.update("subjects", updatedSubjectsList)
                         .addOnSuccessListener {
-                            println("✅ Firestore에서 과목 삭제 성공: $subjectName")
-                            loadUserData()  // 🔥 Firestore에서 삭제 후 UI 업데이트
+                            println("Firestore에서 과목 삭제 성공: $subjectName")
+                            loadUserData()  // Firestore에서 삭제 후 UI 업데이트
                         }
                         .addOnFailureListener { e ->
-                            println("❌ Firestore에서 과목 삭제 실패: ${e.message}")
+                            println("Firestore에서 과목 삭제 실패: ${e.message}")
                         }
                 }
             }

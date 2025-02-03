@@ -104,15 +104,15 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                 if (document.exists()) {
                     val totalTimeForDate = document.getLong("totalTime_$date") ?: 0L
 
-                    // 선택한 날짜의 총 학습 시간을 UI에 반영
+                    // 🔥 선택한 날짜의 총 학습 시간을 UI에 반영
                     runOnUiThread {
                         totalTimerTextView.text = formatTime(totalTimeForDate)
                     }
 
-                    println("Firestore에서 '$date' 총 학습 시간 불러오기 성공: $totalTimeForDate")
+                    println("✅ Firestore에서 '$date' 총 학습 시간 불러오기 성공: $totalTimeForDate")
                 }
             }.addOnFailureListener { e ->
-                println("Firestore에서 '$date' 총 학습 시간 불러오기 실패: ${e.message}")
+                println("❌ Firestore에서 '$date' 총 학습 시간 불러오기 실패: ${e.message}")
             }
         }
     }
@@ -215,10 +215,10 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                             addNewSubjectTimer(subjectName, color)  // UI에 즉시 반영
                         }
                     }
-                    println("Firestore에서 과목 목록 불러오기 성공")
+                    println("✅ Firestore에서 과목 목록 불러오기 성공")
                 }
             }.addOnFailureListener { e ->
-                println("Firestore에서 과목 목록 불러오기 실패: ${e.message}")
+                println("❌ Firestore에서 과목 목록 불러오기 실패: ${e.message}")
             }
         }
     }
@@ -437,7 +437,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                     val subjectsList = document.get("subjects") as? MutableList<Map<String, Any>> ?: mutableListOf()
                     val subjectExists = subjectsList.any { it["name"] == subjectName }
                     if (subjectExists) {
-                        println("⚠이미 존재하는 과목: $subjectName (추가 X)")
+                        println("이미 존재하는 과목: $subjectName (추가 X)")
                         return@addOnSuccessListener
                     }
 

@@ -1,9 +1,11 @@
 package com.example.studywithswu
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.CalendarView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +41,7 @@ class CalendarView : AppCompatActivity() {
         calendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
             val selectedDate = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)
             fetchStudyData(selectedDate) // Firestore에서 데이터 가져오기
+            fetchStartStopTimes(selectedDate)
         }
 
         // 초기 날짜로 데이터 표시
@@ -48,31 +51,31 @@ class CalendarView : AppCompatActivity() {
 
     // Firestore에서 데이터 가져오기
     private fun fetchStudyData(date: String) {
-        db.collection("users").document(date).get()
+        var userId = FirebaseAuth.getInstance().currentUser?.uid?: return
+        db.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    // Firestore 데이터 읽기
-                    val totalTime= document.getString("subjects") ?: "00:00:00"
+                    val subjects = document.get("subjects") as? Map<String, String> ?: emptyMap()
 
-                    // 데이터 업데이트
+                    val totalTime = subjects["totalTime"] ?: "00:00:00"
                     totalStudyTimeText.text = totalTime
-                } else {
-                    // 해당 날짜에 데이터가 없을 경우
-                    totalStudyTimeText.text = "00:00:00"
                 }
             }
-            .addOnFailureListener {
-                // 에러 처리
+            .addOnFailureListener { e ->
                 totalStudyTimeText.text = "오류 발생"
             }
     }
 
     private fun fetchStartStopTimes(date: String) {
-        db.collection("users").document(date).get().addOnSuccessListener { document ->
+        var userId = FirebaseAuth.getInstance().currentUser?.uid?: return
+        db.collection("users").document(userId).get().addOnSuccessListener { document ->
             if(document.exists()) {
                 // Firestore에서 "start_times"와 "stop_times" 필드 값 읽기
-                val startTimes = document.getString("start_times") ?: "-"
-                val stopTimes = document.getString("stop_times") ?: "공부 중.."
+                val subjects = document.get("subjects") as? Map<String, String> ?: emptyMap()
+
+                val startTimes = subjects["start_times"] ?: "-"
+                val stopTimes = subjects["stop_times"] ?: "공부 중.."
+
                 // startTimeText와 endTimeText 업데이트
                 startTimeText.text = startTimes
                 endTimeText.text = stopTimes

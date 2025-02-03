@@ -35,6 +35,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
     private lateinit var imageView: ImageView
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var firestore: FirebaseFirestore
+    private lateinit var studySessionsLayout: LinearLayout
     private var userId: String? = null
     private var previousTotalTime: Long = 0L
     private val handler = Handler(Looper.getMainLooper())
@@ -103,6 +104,8 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
 
         // ActionBar의 타이틀을 없애고 싶으면
         supportActionBar?.setDisplayShowTitleEnabled(false)
+
+        studySessionsLayout = findViewById(R.id.studySessionsLayout)
     }
 
     override fun onDateSelected(date: Date) {
@@ -245,6 +248,46 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             }.addOnFailureListener { e ->
                 println("Firestore에서 과목 목록 불러오기 실패: ${e.message}")
             }
+
+            // 📌 Firestore에서 start_times & stop_times 불러오기
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val startTimes = document.get("start_times") as? List<String> ?: emptyList()
+                    val stopTimes = document.get("stop_times") as? List<String> ?: emptyList()
+
+                    // String 리스트를 Long으로 변환
+                    val startTimesInLong = startTimes.mapNotNull { it.toLongOrNull() } // String -> Long 변환 (변환 불가한 값은 제외)
+                    val stopTimesInLong = stopTimes.mapNotNull { it.toLongOrNull() } // String -> Long 변환 (변환 불가한 값은 제외)
+
+                    runOnUiThread {
+                        println("Firestore에서 start_times 불러오기 성공: $startTimes")
+                        println("Firestore에서 stop_times 불러오기 성공: $stopTimes")
+
+                        // 🔹 필요한 데이터만 UI에 출력하거나 처리
+                        displayStudySessions(startTimesInLong, stopTimesInLong)
+                    }
+                }
+            }.addOnFailureListener { e ->
+                println("Firestore에서 start_times/stop_times 불러오기 실패: ${e.message}")
+            }
+        }
+    }
+
+    // 🔹 가져온 start_times & stop_times를 활용하여 화면에 표시하는 함수
+    private fun displayStudySessions(startTimes: List<Long>, stopTimes: List<Long>) {
+        studySessionsLayout.removeAllViews() // 기존 UI 초기화
+
+        for (i in startTimes.indices) {
+            val startTime = startTimes.getOrNull(i) ?: continue
+            val stopTime = stopTimes.getOrNull(i) ?: continue
+
+            val sessionText = "공부 시간: ${formatTime(startTime)} ~ ${formatTime(stopTime)}"
+            val textView = TextView(this).apply {
+                text = sessionText
+                textSize = 16f
+                setTextColor(Color.BLACK)
+            }
+            studySessionsLayout.addView(textView)
         }
     }
 

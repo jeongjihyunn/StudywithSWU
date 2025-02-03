@@ -56,7 +56,7 @@ dependencies {
     dependencies {
 
         // Firebase BOM 설정 추가
-        implementation(platform("com.google.firebase:firebase-bom:32.1.1"))
+        implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
 
         // Firebase 의존성 추가 (BOM 사용)
         implementation("com.google.firebase:firebase-auth-ktx")

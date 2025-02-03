@@ -25,6 +25,13 @@
         android:id="@+id/calendar_container"
         android:layout_width="400dp"
         android:layout_height="70dp"/>
+
+    <LinearLayout
+        android:id="@+id/studySessionsLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
+
     <!-- ScrollView 추가 -->
     <ScrollView
         android:layout_width="match_parent"

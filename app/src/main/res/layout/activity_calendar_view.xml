@@ -29,6 +29,13 @@
     android:layout_marginTop="16dp" />
 
     <!-- 총 공부 시간 텍스트 -->
+    <LinearLayout
+        android:id="@+id/studySessionsLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"/>
+
 
     <!-- 총 공부 시간 값 -->
     <TextView

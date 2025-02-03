@@ -130,7 +130,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                 true
             }
             R.id.action_studyplanner -> {
-                val intent = Intent(this, Studyplanner::class.java) // 임시로 마이페이지로 이동할 수 있게 해놓음 여기 수정하면 됨
+                val intent = Intent(this, StudyPlanner::class.java) // 임시로 마이페이지로 이동할 수 있게 해놓음 여기 수정하면 됨
                 startActivity(intent)
                 true
             }
@@ -157,6 +157,8 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                 }
                 R.id.option_2 -> {
                     Toast.makeText(this, "'캘린더' 선택", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, CalendarView::class.java)
+                    startActivity(intent)
                     true
                 }
                 else -> false

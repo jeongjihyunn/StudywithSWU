@@ -6,41 +6,118 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:padding="16dp"
     tools:context=".CalendarView">
 
+    <!-- 캘린더 -->
     <CalendarView
         android:id="@+id/studyCalendar"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        />
+        android:layout_height="314dp" />
+
+    <!-- FrameLayout 유지 -->
     <FrameLayout
         android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="68dp" />
+
+    <!-- 총 공부 시간 위에 가로선 추가 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#000000"
+    android:layout_marginTop="16dp" />
+
+    <!-- 총 공부 시간 텍스트 -->
+
+    <!-- 총 공부 시간 값 -->
     <TextView
-        android:id="@+id/studyTimeText"
+        android:id="@+id/totalTimeText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:padding="20dp"
+        android:text="총 공부 시간"
+        android:textColor="@color/black"
         android:textSize="18sp"
         android:textStyle="normal"
-        android:textColor="@color/black"
-        android:text="총 공부 시간"
         tools:ignore="HardcodedText" />
 
     <TextView
-        android:id="@+id/studyTimeTextView"
+        android:id="@+id/totalTimeTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:contentDescription="@string/app_name"
         android:gravity="center"
         android:padding="8dp"
-        android:text=" "
+        android:text="00:00:00"
         android:textColor="@color/black"
         android:textSize="30sp"
         android:textStyle="bold"
         tools:ignore="HardcodedText" />
+
+    <!-- 시작 시간과 종료 시간을 나란히 배치 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="16dp">
+
+        <!-- 시작 시간 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/startTimeLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="시작 시간"
+                android:textColor="@color/black"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/startTimeTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="00:00:00"
+                android:textSize="16sp"
+                android:textColor="@color/black"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- 종료 시간 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/endTimeLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="종료 시간"
+                android:textColor="@color/black"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/endTimeTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="공부 중.."
+                android:textSize="16sp"
+                android:textColor="@color/black"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>

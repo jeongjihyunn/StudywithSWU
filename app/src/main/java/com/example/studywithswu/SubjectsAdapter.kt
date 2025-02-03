@@ -1,58 +1,46 @@
 package com.example.studywithswu
 
-import android.content.Context
+import android.graphics.Color
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.TextView
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import androidx.recyclerview.widget.RecyclerView
+import com.example.studywithswu.databinding.ItemSubjectBinding
 
-class SubjectsAdapter(
-    context: Context,
-    private var subjects: List<Subject>
-) : ArrayAdapter<Subject>(context, 0, subjects) {
+// Adapter에 List<Subject>을 전달받아서 RecyclerView에 표시
+class SubjectsAdapter(private val subjects: List<Subject>) : RecyclerView.Adapter<SubjectsAdapter.SubjectViewHolder>() {
 
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.item_subject, parent, false)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SubjectViewHolder {
+        val binding = ItemSubjectBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return SubjectViewHolder(binding)
+    }
 
-        val subject = getItem(position)
+    override fun onBindViewHolder(holder: SubjectViewHolder, position: Int) {
+        val subject = subjects[position]
+        holder.bind(subject)
+    }
 
-        val subjectNameTextView: TextView = view.findViewById(R.id.subjectName)
-        val subjectTimeTextView: TextView = view.findViewById(R.id.subjectTime)
+    override fun getItemCount(): Int = subjects.size
 
-        subject?.let {
-            subjectNameTextView.text = it.name
-            subjectTimeTextView.text = formatTime(it.time)  // 시간을 포맷팅하여 표시
+    // ViewHolder에서 데이터를 바인딩합니다.
+    inner class SubjectViewHolder(private val binding: ItemSubjectBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(subject: Subject) {
+            // 과목명 표시
+            binding.subjectNameTextView.text = subject.name
+
+            // 과목 색상 표시
+            binding.subjectColorView.setBackgroundColor(Color.parseColor(subject.color))
+
+            // 타이머 시간 표시 (2025-02-03 날짜 기준으로 시간 가져오기)
+            val time = subject.time["2025-02-03"] ?: 0L  // 예시로 "2025-02-03" 날짜를 기준으로 시간 표시
+            binding.timeTextView.text = formatTime(time)
         }
-
-        return view
     }
 
-    // 시간 포맷팅 함수
-    private fun formatTime(timeMap: Map<String, Long>): String {
-        val today = getCurrentDate()
-        val timeForToday = timeMap[today] ?: 0L
-        return formatTime(timeForToday)
-    }
-
-    private fun getCurrentDate(): String {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        return dateFormat.format(Date())
-    }
-
-    private fun formatTime(time: Long): String {
-        val hours = (time / 1000) / 3600
-        val minutes = (time / 1000 % 3600) / 60
-        val seconds = time / 1000 % 60
+    // 시간 포맷을 (HH:mm:ss) 형식으로 변환하는 함수
+    private fun formatTime(timeInMillis: Long): String {
+        val hours = (timeInMillis / (1000 * 60 * 60)).toInt()
+        val minutes = (timeInMillis / (1000 * 60) % 60).toInt()
+        val seconds = (timeInMillis / 1000 % 60).toInt()
         return String.format("%02d:%02d:%02d", hours, minutes, seconds)
-    }
-
-    // 새로운 과목 리스트로 업데이트
-    fun updateSubjects(newSubjects: List<Subject>) {
-        subjects = newSubjects
-        notifyDataSetChanged()  // ListView 업데이트
     }
 }

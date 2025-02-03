@@ -45,6 +45,7 @@ dependencies {
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.navigation.fragment)
+    implementation(libs.firebase.firestore)
     kapt("androidx.room:room-compiler:2.6.1")
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.appcompat)

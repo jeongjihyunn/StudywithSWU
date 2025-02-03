@@ -2,111 +2,137 @@ package com.example.studywithswu
 
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
-import android.widget.GridLayout
-import android.widget.ListView
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.studywithswu.databinding.ActivityStudyplannerBinding
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
-import javax.security.auth.Subject
+import com.example.studywithswu.Subject // Subject 클래스를 사용하기 위해 추가
+import java.util.Calendar
 
-class Studyplanner : AppCompatActivity() {
+
+class StudyPlanner : AppCompatActivity() {
 
     private lateinit var firestore: FirebaseFirestore
-    private lateinit var subjectListView: ListView
-    private lateinit var totalStudyTimeTextView: TextView
-    private lateinit var subjectsAdapter: SubjectsAdapter
-    private var subjectListener: ListenerRegistration? = null
+    private var userId: String? = null
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var timetableLayout: LinearLayout
+    private lateinit var dateLayout: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main) // XML 레이아웃 파일과 연결
+        setContentView(R.layout.activity_studyplanner)
 
-        //FirebaseFirestore 인스턴스 초기화
         firestore = FirebaseFirestore.getInstance()
+        recyclerView = findViewById(R.id.recyclerView)
+        timetableLayout = findViewById(R.id.timetableLayout)
+        dateLayout = findViewById(R.id.dateLayout)
 
-        //view 초기화
-        subjectListView = findViewById(R.id.subjectListView)
-        totalStudyTimeTextView = findViewById(R.id.totalStudyTimeTextView)
+        userId = FirebaseAuth.getInstance().currentUser?.uid
 
-        //Adapter 설정
-        subjectsAdapter = SubjectsAdapter(this, emptyList())
-        subjectListView.adapter = subjectsAdapter
+        // Firestore에서 데이터를 가져오는 함수 호출
+        loadUserData()
+    }
 
-        //과목 데이터 실시간 리스닝
-        listenToSubjectUpdates()
+    private fun loadUserData() {
+        userId?.let { uid ->
+            val userRef = firestore.collection("users").document(uid)
 
-        // 타임테이블 셀 추가
-        val gridLayout = findViewById<GridLayout>(R.id.timetableGrid)
-        gridLayout.removeAllViews()
+            userRef.get().addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val subjectsList = document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
 
-        val rowCount = 7 // 주간 기준으로 7일 (월~일)
-        val columnCount = 24 // 하루 24시간
+                    // 날짜 영역에 오늘 날짜를 동적으로 추가
+                    displayDates()
 
-        // 타임테이블 그리드 구성
-        for (row in 0..rowCount) { // 0부터 시작해서 시간 표시 포함
-            for (col in 0..columnCount) { // 0부터 시작해서 시간 표시 포함
-                val textView = TextView(this).apply {
-                    layoutParams = GridLayout.LayoutParams().apply {
-                        rowSpec = GridLayout.spec(row, 1f)
-                        columnSpec = GridLayout.spec(col, 1f)
-                        width = 0
-                        height = 0
-                        setMargins(1, 1, 1, 1) // 셀 간격
-                    }
-                    gravity = Gravity.CENTER
-                    textSize = 12f
-                    setBackgroundColor(Color.WHITE) // 기본 배경색
+                    // 과목 리스트를 RecyclerView에 설정
+                    setUpSubjects(subjectsList)
 
-                    // 첫 번째 행: 시간 표시
-                    if (row == 0) {
-                        text = if (col == 0) "" else "${col - 1}:00"
-                        setBackgroundColor(Color.LTGRAY)
-                    }
-                    // 나머지 셀
-                    else {
-                        text = "" // 빈 셀
-                        setBackgroundColor(Color.parseColor("#F0F0F0"))
-                    }
+                    // 타임테이블을 설정
+                    setUpTimetable(subjectsList)
                 }
-                gridLayout.addView(textView)
             }
         }
     }
 
-    //Firestore에서 과목 데이터를 실시간으로 가져오는 함수
-    private fun listenToSubjectUpdates() {
-        val userID = "사용자ID" //실제 사용자 ID로 변경 필요
-        val userRef = firestore.collection("users").document(userID)
+    private fun displayDates() {
+        val today = getCurrentDate() // 오늘 날짜 가져오기
+        val dateTextView = TextView(this).apply {
+            text = today
+            textSize = 16f
+            setPadding(16, 8, 16, 8)
+        }
+        dateLayout.addView(dateTextView)
+    }
 
-        subjectListener = userRef.addSnapshotListener { document, e ->
-            if (e != null) {
-                Log.w("Firestore", "Listen failed.", e)
-                return@addSnapshotListener
+    private fun setUpSubjects(subjectsList: List<Map<String, Any>>) {
+        val adapter = SubjectAdapter(subjectsList) { subject ->
+            // 클릭 시 과목에 대한 세부정보를 표시하거나 타이머를 시작할 수 있음
+        }
+
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = adapter
+    }
+
+    private fun setUpTimetable(subjectsList: List<Map<String, Any>>) {
+        // 타임테이블을 구현하기 위해 과목 리스트를 순차적으로 배치
+        subjectsList.forEachIndexed { index, subject ->
+            val color = subject["color"] as? String ?: "#FFFFFF"
+
+            val subjectBlock = TextView(this).apply {
+                text = subject["name"] as? String ?: "과목명"
+                setBackgroundColor(Color.parseColor(color))
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+                setPadding(8, 8, 8, 8)
+                gravity = Gravity.CENTER
             }
 
-            if (document != null && document.exists()) {
-                val subjectsList = document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
-
-                //과목 정보를 Subject 데이터 클래스로 변환
-                val subjects = subjectsList.map { subjectMap ->
-                    val name = subjectMap["name"] as? String ?: ""
-                    val color = subjectMap["color"] as? String ?: ""
-                    val time = subjectMap["time"] as? Map<String, Long> ?: emptyMap()
-                    Subject(name, color, time)
-                }
-
-                //Adapter에 과목 리스트 업데이트
-                subjectsAdapter.updateSubjects(subjects)
-            }
+            timetableLayout.addView(subjectBlock)
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        //Activity가 종료되면 Firestore 리스너 해제
-        subjectListener?.remove()
+    // 오늘 날짜 구하는 함수
+    private fun getCurrentDate(): String {
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH) + 1
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        return "$year-$month-$day"
+    }
+
+    // RecyclerView의 어댑터를 생성하는 클래스
+    class SubjectAdapter(private val subjectsList: List<Map<String, Any>>, private val itemClickListener: (Map<String, Any>) -> Unit) :
+        RecyclerView.Adapter<SubjectAdapter.SubjectViewHolder>() {
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SubjectViewHolder {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_subject, parent, false)
+            return SubjectViewHolder(view)
+        }
+
+        override fun onBindViewHolder(holder: SubjectViewHolder, position: Int) {
+            val subject = subjectsList[position]
+            holder.bind(subject)
+            holder.itemView.setOnClickListener {
+                itemClickListener(subject)
+            }
+        }
+
+        override fun getItemCount(): Int = subjectsList.size
+
+        class SubjectViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+            private val subjectNameTextView: TextView = itemView.findViewById(R.id.subjectNameTextView)
+
+            fun bind(subject: Map<String, Any>) {
+                subjectNameTextView.text = subject["name"] as? String ?: "과목명"
+            }
+        }
     }
 }
+

@@ -6,22 +6,26 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.PopupMenu
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import java.text.SimpleDateFormat
-import java.util.*
 import androidx.appcompat.widget.Toolbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
-import io.grpc.Context
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedListener {
     private lateinit var dateTextView: TextView
@@ -36,9 +40,20 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
     private val handler = Handler(Looper.getMainLooper())
     private var activeTimer: TimerRunnable? = null
     private var activeButton: Button? = null
-    private val colors = listOf("#FAE9E2", "#FCE4E2", "#EAEEE0", "#EBF6FA", "#EEE8E8", "#E9CCC4", "#E1D7CD", "#D7E0E5")
-    private val imageResources = listOf(R.drawable.char_original, R.drawable.char_4, R.drawable.char_8,
-        R.drawable.char_12, R.drawable.char_16, R.drawable.char_20, R.drawable.char_24)
+    private val colors = listOf(
+        "#FAE9E2",
+        "#FCE4E2",
+        "#EAEEE0",
+        "#EBF6FA",
+        "#EEE8E8",
+        "#E9CCC4",
+        "#E1D7CD",
+        "#D7E0E5"
+    )
+    private val imageResources = listOf(
+        R.drawable.char_original, R.drawable.char_4, R.drawable.char_8,
+        R.drawable.char_12, R.drawable.char_16, R.drawable.char_20, R.drawable.char_24
+    )
     private val timers = mutableListOf<TimerRunnable>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,6 +104,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
         // ActionBar의 타이틀을 없애고 싶으면
         supportActionBar?.setDisplayShowTitleEnabled(false)
     }
+
     override fun onDateSelected(date: Date) {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val selectedDateStr = dateFormat.format(date)
@@ -96,6 +112,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
 
         loadTotalTimeForDate(selectedDateStr)
     }
+
     private fun loadTotalTimeForDate(date: String) {
         userId?.let { uid ->
             val userRef = firestore.collection("users").document(uid)
@@ -129,11 +146,14 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                 showMenuOptions(findViewById(item.itemId)) // 클릭한 메뉴 버튼의 위치에서 팝업 표시 true
                 true
             }
+
             R.id.action_studyplanner -> {
-                val intent = Intent(this, StudyPlanner::class.java) // 임시로 마이페이지로 이동할 수 있게 해놓음 여기 수정하면 됨
+                val intent =
+                    Intent(this, StudyPlanner::class.java) // 임시로 마이페이지로 이동할 수 있게 해놓음 여기 수정하면 됨
                 startActivity(intent)
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -155,12 +175,14 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                     startActivity(intent)
                     true
                 }
+
                 R.id.option_2 -> {
                     Toast.makeText(this, "'캘린더' 선택", Toast.LENGTH_SHORT).show()
                     val intent = Intent(this, CalendarView::class.java)
                     startActivity(intent)
                     true
                 }
+
                 else -> false
             }
         }
@@ -203,7 +225,8 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
 
             userRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val subjectsList = document.get("subjects") as? List<Map<String, String>> ?: emptyList()
+                    val subjectsList =
+                        document.get("subjects") as? List<Map<String, String>> ?: emptyList()
 
                     runOnUiThread {
                         subjectsLayout.removeAllViews()  // 기존 뷰 초기화 후 추가 (중복 방지)
@@ -253,7 +276,8 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
         val input = EditText(this).apply { hint = "과목명을 입력하세요" }
         layout.addView(input)
 
-        val colorSelectionLayout = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val colorSelectionLayout =
+            LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         var selectedColor = colors[0]
 
         colors.forEach { color ->
@@ -372,12 +396,14 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             ).apply { setMargins(16, 0, 16, 0) }
         }
 
+
         val subjectTextView = TextView(this).apply {
             text = subjectName
             textSize = 18f
-            layoutParams = LinearLayout.LayoutParams(400, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-                setMargins(16, 0, 16, 0)
-            }
+            layoutParams =
+                LinearLayout.LayoutParams(400, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                    setMargins(16, 0, 16, 0)
+                }
             setOnClickListener { showEditSubjectDialog(this) }
         }
 
@@ -397,27 +423,40 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
         timers.add(timerRunnable)
 
         startStopButton.setOnClickListener {
-            if (activeTimer != null && activeTimer!!.isRunning() && activeTimer != timerRunnable) {
-                activeTimer!!.stop()
+            val currentTime = getCurrentTime()
+
+            if (activeTimer == timerRunnable) { // 타이머가 실행 중인 경우 (정지)
+                activeTimer?.let {
+                    val elapsedTime = activeTimer!!.getElapsedTime()
+                    activeTimer!!.stop()
+                    activeTimer = null
+                    activeButton = null
+                    startStopButton.text = "시작"
+
+                    // 🔥 Firestore에 종료 시간 저장
+                    saveTimeToFirestore(subjectName, currentTime, isStart = false)
+
+                    // 🔥 타이머 종료 시 Firestore 총 학습 시간 업데이트
+                    updateSubjectTimeInFirestore(subjectName, elapsedTime)
+
+                    // 🔥 종료 시간을 stop_times에 추가
+                    updateStopTimesInFirestore(subjectName, currentTime)
+                }
+            } else { // 타이머 시작
+                activeTimer?.stop()
                 activeButton?.text = "시작"
-            }
 
-            if (activeTimer == timerRunnable) {
-                val elapsedTime = activeTimer!!.getElapsedTime()
-                activeTimer!!.stop()
-                startStopButton.text = "시작"
-                activeTimer = null
-                activeButton = null
-
-                // 🔹 타이머 종료 시 Firestore 업데이트
-                updateSubjectTimeInFirestore(subjectName, elapsedTime)
-            } else {
                 activeTimer = timerRunnable
                 activeButton = startStopButton
                 activeTimer!!.toggle(startStopButton)
+
+                // 🔥 Firestore에 시작 시간 저장
+                saveTimeToFirestore(subjectName, currentTime, isStart = true)
+
+                // 🔥 시작 시간을 start_times에 추가
+                updateStartTimesInFirestore(subjectName, currentTime)
             }
         }
-
 
         subjectLayout.addView(startStopButton)
         subjectLayout.addView(subjectTextView)
@@ -425,6 +464,12 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
         subjectsLayout.addView(subjectLayout)
 
         saveSubjectToFirestore(userId!!, subjectName, color)
+    }
+
+    fun getCurrentTime(): String {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val currentDate = Date()
+        return dateFormat.format(currentDate)
     }
 
     private fun saveSubjectToFirestore(userId: String, subjectName: String, color: String) {
@@ -436,7 +481,8 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
         userRef.get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val subjectsList = document.get("subjects") as? MutableList<Map<String, Any>> ?: mutableListOf()
+                    val subjectsList = document.get("subjects") as? MutableList<Map<String, Any>>
+                        ?: mutableListOf()
                     val subjectExists = subjectsList.any { it["name"] == subjectName }
                     if (subjectExists) {
                         println("⚠️ 이미 존재하는 과목: $subjectName (추가 X)")
@@ -465,8 +511,8 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
     }
 
 
-
-    private class TimerRunnable(val timerTextView: TextView, private val onUpdate: () -> Unit) : Runnable {
+    private class TimerRunnable(val timerTextView: TextView, private val onUpdate: () -> Unit) :
+        Runnable {
 
         private val handler = Handler(Looper.getMainLooper())
         private var isRunning = false
@@ -525,7 +571,8 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
 
             userRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val subjectsList = document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
+                    val subjectsList =
+                        document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
                     val subject = subjectsList.find { it["name"] == subjectName }
                     val timeMap = subject?.get("time") as? Map<String, Long> ?: emptyMap()
                     val studyTimeForToday = timeMap[today] ?: 0L
@@ -576,13 +623,19 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             }
         }
     }
-    private fun loadSubjectTimeForDate(subjectName: String, date: String, callback: (Long) -> Unit) {
+
+    private fun loadSubjectTimeForDate(
+        subjectName: String,
+        date: String,
+        callback: (Long) -> Unit
+    ) {
         userId?.let { uid ->
             val userRef = firestore.collection("users").document(uid)
 
             userRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val subjectsList = document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
+                    val subjectsList =
+                        document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
                     val subject = subjectsList.find { it["name"] == subjectName }
                     val timeMap = subject?.get("time") as? Map<String, Long> ?: emptyMap()
                     val subjectTimeForDate = timeMap[date] ?: 0L
@@ -599,7 +652,8 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
 
             userRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val subjectsList = document.get("subjects") as? MutableList<Map<String, Any>> ?: mutableListOf()
+                    val subjectsList = document.get("subjects") as? MutableList<Map<String, Any>>
+                        ?: mutableListOf()
 
                     val updatedSubjectsList = subjectsList.map {
                         if (it["name"] == oldName) {
@@ -622,6 +676,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             }
         }
     }
+
     private fun updateSubjectTimeInFirestore(subjectName: String, elapsedTime: Long) {
         userId?.let { uid ->
             val userRef = firestore.collection("users").document(uid)
@@ -629,7 +684,8 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             // Firestore에서 사용자의 과목 데이터를 가져오기
             userRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val subjectsList = document.get("subjects") as? MutableList<Map<String, Any>> ?: mutableListOf()
+                    val subjectsList = document.get("subjects") as? MutableList<Map<String, Any>>
+                        ?: mutableListOf()
 
                     val today = getCurrentDate() // 오늘 날짜 가져오기
 
@@ -638,7 +694,8 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                         if (it["name"] == subjectName) {
                             it.toMutableMap().apply {
                                 // 기존 시간 가져오기
-                                val timeMap = it["time"] as? MutableMap<String, Long> ?: mutableMapOf()
+                                val timeMap =
+                                    it["time"] as? MutableMap<String, Long> ?: mutableMapOf()
                                 val currentTime = timeMap[today] ?: 0L
 
                                 // 날짜별로 시간 업데이트
@@ -661,13 +718,53 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
         }
     }
 
+    fun updateStartTimesInFirestore(subjectName: String, startTime: String) {
+        userId?.let { uid ->
+            val sessionRef = firestore.collection("users").document(uid)
+
+            sessionRef.get().addOnSuccessListener { document ->
+                if (!document.exists()) {
+                    // 문서가 없으면 새로 생성하고 시작 시간 추가
+                    sessionRef.set(mapOf("start_times" to listOf(startTime)))
+                } else {
+                    // 문서가 있으면 시작 시간 추가
+                    sessionRef.update("start_times", FieldValue.arrayUnion(startTime))
+                }
+            }.addOnFailureListener { e ->
+                println("❌ Firestore에서 문서 조회 실패: ${e.message}")
+            }
+        }
+    }
+
+
+    fun updateStopTimesInFirestore(subjectName: String, stopTime: String) {
+        userId?.let { uid ->
+            val sessionRef = firestore.collection("users").document(uid)
+
+            sessionRef.get().addOnSuccessListener { document ->
+                if (!document.exists()) {
+                    // 문서가 없으면 새로 생성하고 종료 시간 추가
+                    sessionRef.set(mapOf("stop_times" to listOf(stopTime)))
+                } else {
+                    // 문서가 있으면 종료 시간 추가
+                    sessionRef.update("stop_times", FieldValue.arrayUnion(stopTime))
+                }
+            }.addOnFailureListener { e ->
+                println("❌ Firestore에서 문서 조회 실패: ${e.message}")
+            }
+        }
+    }
+
+
+
     private fun loadSubjectTimeForDate(subjectName: String, date: String) {
         userId?.let { uid ->
             val userRef = firestore.collection("users").document(uid)
 
             userRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val subjectsList = document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
+                    val subjectsList =
+                        document.get("subjects") as? List<Map<String, Any>> ?: emptyList()
                     val subject = subjectsList.find { it["name"] == subjectName }
                     val timeMap = subject?.get("time") as? Map<String, Long> ?: emptyMap()
                     val subjectTimeForDate = timeMap[date] ?: 0L
@@ -692,7 +789,8 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                 val userRef = firestore.collection("users").document(uid)
 
                 userRef.get().addOnSuccessListener { document ->
-                    val subjectsList = document.get("subjects") as? MutableList<Map<String, String>> ?: mutableListOf()
+                    val subjectsList = document.get("subjects") as? MutableList<Map<String, String>>
+                        ?: mutableListOf()
 
                     // 🔥 삭제할 과목 찾기
                     val updatedSubjectsList = subjectsList.filter { it["name"] != subjectName }
@@ -712,5 +810,34 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             Toast.makeText(this, "과목이 삭제되었습니다. Firestore에서도 삭제됨.", Toast.LENGTH_SHORT).show()
         }
     }
+
+    private fun saveTimeToFirestore(subjectName: String, time: String, isStart: Boolean) {
+        // subjectName과 time이 비어있지 않도록 체크
+        if (subjectName.isEmpty() || time.isEmpty()) {
+            println("❌ subjectName 또는 time이 비어있습니다.")
+            return
+        }
+
+        userId?.let { uid ->
+            val sessionRef = firestore.collection("users").document(uid)
+                .collection("users").document(subjectName)
+
+            val field = if (isStart) "start_times" else "stop_times"
+
+            sessionRef.get().addOnSuccessListener { document ->
+                if (!document.exists()) {
+                    // 문서가 없으면 새로 생성, 기존 데이터에 병합
+                    sessionRef.set(mapOf(field to listOf(time)), SetOptions.merge())
+                } else {
+                    // 문서가 존재하면 배열에 시간 추가
+                    sessionRef.update(field, FieldValue.arrayUnion(time))
+                }
+            }.addOnFailureListener { e ->
+                println("❌ Firestore에 $field 저장 실패: ${e.message}")
+            }
+        }
+    }
+
+
 
 }

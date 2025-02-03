@@ -19,6 +19,7 @@ roomCommon = "2.6.1"
 navigationFragment = "2.8.6"
 navigationFragmentKtx = "2.8.6"
 navigationUiKtx = "2.8.6"
+firebaseFirestore = "25.1.1"
 
 
 [libraries]
@@ -39,6 +40,7 @@ androidx-room-common = { group = "androidx.room", name = "room-common", version.
 androidx-navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
 androidx-navigation-fragment-ktx = { group = "androidx.navigation", name = "navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
 androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation-ui-ktx", version.ref = "navigationUiKtx" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

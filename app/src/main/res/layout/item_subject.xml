@@ -1,33 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- item_subject.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:padding="16dp"
-    android:background="?android:attr/selectableItemBackground"
-    android:layout_marginBottom="8dp">
+    android:background="?android:attr/selectableItemBackground">
 
-    <LinearLayout
-        android:layout_width="0dp"
+    <!-- 과목 색상 -->
+    <View
+        android:id="@+id/subjectColorView"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="center_vertical" />
+
+    <!-- 과목 이름 -->
+    <TextView
+        android:id="@+id/subjectNameTextView"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:text="과목명"
+        android:textSize="18sp"
+        android:textColor="#000000"
+        android:gravity="center"/>
 
-        <TextView
-            android:id="@+id/subjectName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Subject Name"
-            android:textSize="18sp"
-            android:textColor="@android:color/black"/>
-
-        <TextView
-            android:id="@+id/subjectTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="00:00:00"
-            android:textSize="16sp"
-            android:textColor="@android:color/black"/>
-    </LinearLayout>
+    <!-- 과목 시간 -->
+    <TextView
+        android:id="@+id/timeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="00:00:00"
+        android:textSize="14sp"
+        android:layout_gravity="center_vertical" />
 </LinearLayout>

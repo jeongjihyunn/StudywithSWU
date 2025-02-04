@@ -112,10 +112,16 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
     override fun onDateSelected(date: Date) {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val selectedDateStr = dateFormat.format(date)
-        dateTextView.text = dateFormat.format(date)
 
+        // UI 업데이트
+        runOnUiThread {
+            dateTextView.text = selectedDateStr
+        }
+
+        // 선택한 날짜에 해당하는 총 학습 시간 불러오기
         loadTotalTimeForDate(selectedDateStr)
     }
+
 
     private fun loadTotalTimeForDate(date: String) {
         userId?.let { uid ->

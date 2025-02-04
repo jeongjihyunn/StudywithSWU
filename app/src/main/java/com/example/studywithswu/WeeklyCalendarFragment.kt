@@ -67,6 +67,7 @@ class WeeklyCalendarFragment : Fragment() {
         // WeeklyCalendarRecycler 초기화
         weeklyCalendarRecycler = WeeklyCalendarRecycler(currentWeekDates) { date ->
             selectedDate = date  // 선택된 날짜 업데이트
+            dateSelectedListener?.onDateSelected(date)
         }
         weeklyCalendar.adapter = weeklyCalendarRecycler
 
@@ -91,18 +92,20 @@ class WeeklyCalendarFragment : Fragment() {
 
     }
 
-    private fun updateCalendar(){
+    private fun updateCalendar() {
         currentWeekDates = getWeekDates()
+
         if (::weeklyCalendarRecycler.isInitialized) {
-            // 기존 어댑터의 선택된 날짜를 유지하면서 새로운 주의 날짜들로 업데이트
             weeklyCalendarRecycler.updateDates(currentWeekDates)
         } else {
             weeklyCalendarRecycler = WeeklyCalendarRecycler(currentWeekDates) { date ->
                 selectedDate = date
+                dateSelectedListener?.onDateSelected(date)  // 선택된 날짜를 MainScreen에 전달
             }
             weeklyCalendar.adapter = weeklyCalendarRecycler
         }
     }
+
 
     private fun getWeekDates(): List<Date>{
         val weekDates = mutableListOf<Date>()

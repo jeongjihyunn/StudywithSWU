@@ -1,5 +1,6 @@
 package com.example.studywithswu
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
@@ -18,15 +19,14 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import java.text.SimpleDateFormat
-import java.util.*
 import androidx.appcompat.widget.Toolbar
+import com.example.studywithswu.databinding.ActivityMainScreenBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
-import java.util.Date
-import java.util.Locale
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedListener {
     private lateinit var dateTextView: TextView
@@ -57,12 +57,18 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
         R.drawable.char_12, R.drawable.char_16, R.drawable.char_20, R.drawable.char_24
     )
     private val timers = mutableListOf<TimerRunnable>()
+    private lateinit var binding: ActivityMainScreenBinding
 
+    @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityMainScreenBinding.inflate(layoutInflater)
         setContentView(R.layout.activity_main_screen)
         firebaseAuth = FirebaseAuth.getInstance()
         firestore = FirebaseFirestore.getInstance()
+
+        val studySessionLayout = findViewById<LinearLayout>(R.id.studySessionsLayout)
+        binding.studySessionsLayout
 
         // Firebase 초기화
         firebaseAuth = FirebaseAuth.getInstance()
@@ -257,15 +263,15 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
                     val stopTimes = document.get("stop_times") as? List<String> ?: emptyList()
 
                     // String 리스트를 Long으로 변환
-                    val startTimesInLong = startTimes.mapNotNull { it.toLongOrNull() } // String -> Long 변환 (변환 불가한 값은 제외)
-                    val stopTimesInLong = stopTimes.mapNotNull { it.toLongOrNull() } // String -> Long 변환 (변환 불가한 값은 제외)
+                    // val startTimesInLong = startTimes.mapNotNull { it.toLongOrNull() } // String -> Long 변환 (변환 불가한 값은 제외)
+                    // val stopTimesInLong = stopTimes.mapNotNull { it.toLongOrNull() } // String -> Long 변환 (변환 불가한 값은 제외)
 
                     runOnUiThread {
                         println("Firestore에서 start_times 불러오기 성공: $startTimes")
                         println("Firestore에서 stop_times 불러오기 성공: $stopTimes")
 
                         // 🔹 필요한 데이터만 UI에 출력하거나 처리
-                        displayStudySessions(startTimesInLong, stopTimesInLong)
+                        displayStudySessions(startTimes, stopTimes)
                     }
                 }
             }.addOnFailureListener { e ->
@@ -275,20 +281,13 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
     }
 
     // 🔹 가져온 start_times & stop_times를 활용하여 화면에 표시하는 함수
-    private fun displayStudySessions(startTimes: List<Long>, stopTimes: List<Long>) {
-        studySessionsLayout.removeAllViews() // 기존 UI 초기화
+    private fun displayStudySessions(startTimes: List<String>, stopTimes: List<String>) {
 
         for (i in startTimes.indices) {
             val startTime = startTimes.getOrNull(i) ?: continue
             val stopTime = stopTimes.getOrNull(i) ?: continue
 
-            val sessionText = "공부 시간: ${formatTime(startTime)} ~ ${formatTime(stopTime)}"
-            val textView = TextView(this).apply {
-                text = sessionText
-                textSize = 16f
-                setTextColor(Color.BLACK)
-            }
-            studySessionsLayout.addView(textView)
+            val sessionText = "공부 시간: ${parseTimeString(startTime)} ~ ${parseTimeString(stopTime)}"
         }
     }
 
@@ -419,6 +418,23 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
         val minutes = (time / 1000 / 60) % 60
         val hours = (time / 1000 / 60 / 60)
         return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+    }
+
+
+    fun parseTimeString(dateTimeString: String): String? {
+        return try {
+            val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            val date = format.parse(dateTimeString) ?: return null
+            val calendar = Calendar.getInstance().apply { time = date }
+            val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            val minute = calendar.get(Calendar.MINUTE)
+            val second =
+                calendar.get(Calendar.SECOND)
+            String.format ("%02d:%02d:%02d", hour, minute, second)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     private fun addNewSubjectTimer(subjectName: String, color: String) {
@@ -800,7 +816,6 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
     }
 
 
-
     private fun loadSubjectTimeForDate(subjectName: String, date: String) {
         userId?.let { uid ->
             val userRef = firestore.collection("users").document(uid)
@@ -881,7 +896,6 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
             }
         }
     }
-
 
 
 }

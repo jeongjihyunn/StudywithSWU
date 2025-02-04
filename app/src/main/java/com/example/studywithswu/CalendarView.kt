@@ -14,6 +14,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 class CalendarView : AppCompatActivity() {
 
@@ -51,38 +53,47 @@ class CalendarView : AppCompatActivity() {
 
     // Firestore에서 데이터 가져오기
     private fun fetchStudyData(date: String) {
-        var userId = FirebaseAuth.getInstance().currentUser?.uid?: return
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         db.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    val subjects = document.get("subjects") as? Map<String, String> ?: emptyMap()
+                    val subjects = document.get("subjects") as? List<*>
+                    val subjectList = subjects?.filterIsInstance<String>() ?: emptyList()
+                    val lastStudyTime = subjectList.lastOrNull() ?: "00:00:00"
 
-                    val totalTime = subjects["totalTime"] ?: "00:00:00"
-                    totalStudyTimeText.text = totalTime
+                    Log.d("bbb", lastStudyTime)
+                    totalStudyTimeText.text = lastStudyTime
+                } else {
+                    totalStudyTimeText.text = "00:00:00"
                 }
             }
             .addOnFailureListener { e ->
+                Log.e("bbb", "데이터 가져오기 실패: ${e.message}")
                 totalStudyTimeText.text = "오류 발생"
             }
     }
 
+
     private fun fetchStartStopTimes(date: String) {
         var userId = FirebaseAuth.getInstance().currentUser?.uid?: return
         db.collection("users").document(userId).get().addOnSuccessListener { document ->
-            if(document.exists()) {
-                // Firestore에서 "start_times"와 "stop_times" 필드 값 읽기
-                val subjects = document.get("subjects") as? Map<String, String> ?: emptyMap()
+            if (document.exists()) {
+                // Firestore에서 데이터를 읽기
+                val start = document.get("start_times") as? ArrayList<String>
+                val end = document.get("stop_times") as? ArrayList<String>
+                val totalTime = document.getLong("totalTime_2025-02-04") ?: 0
 
-                val startTimes = subjects["start_times"] ?: "-"
-                val stopTimes = subjects["stop_times"] ?: "공부 중.."
+                // startTimeText는 첫 번째 값을, endTimeText는 마지막 값을 표시
+                totalStudyTimeText.text = totalTime.toString()
+                startTimeText.text = start?.get(0) ?: "-"
+                endTimeText.text = end?.lastOrNull() ?: "공부 중.."
 
-                // startTimeText와 endTimeText 업데이트
-                startTimeText.text = startTimes
-                endTimeText.text = stopTimes
+                Log.d("aaa", "Total: ${document.get("totalTime_2025-02-04")}")
+                Log.d("aaa", "Start Time: ${start?.get(0) ?: "없음"}")
+                Log.d("aaa", "End Time: ${end?.lastOrNull() ?: "공부 중.."}")
             } else {
-                //해당 날짜에 데이터가 없을 경우
-                startTimeText.text="-"
-                endTimeText.text="공부 중.."
+                startTimeText.text = "-"
+                endTimeText.text = "공부 중.."
             }
         }.addOnFailureListener {
             // 에러 발생 시 처리

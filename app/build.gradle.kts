@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.firebase.firestore)
+    implementation(libs.androidx.recyclerview)
     kapt("androidx.room:room-compiler:2.6.1")
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.appcompat)
@@ -59,6 +60,7 @@ dependencies {
         implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
 
         // Firebase 의존성 추가 (BOM 사용)
+        implementation("com.google.android.gms:play-services-auth:20.7.0")
         implementation("com.google.firebase:firebase-auth-ktx")
         implementation("com.google.firebase:firebase-firestore-ktx")
         implementation("com.google.firebase:firebase-storage-ktx")

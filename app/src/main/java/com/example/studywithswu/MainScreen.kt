@@ -165,7 +165,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
 
             R.id.action_studyplanner -> {
                 val intent =
-                    Intent(this, StudyPlanner::class.java) // 임시로 마이페이지로 이동할 수 있게 해놓음 여기 수정하면 됨
+                    Intent(this, SubjectsActivity::class.java) // 임시로 마이페이지로 이동할 수 있게 해놓음 여기 수정하면 됨
                 startActivity(intent)
                 true
             }
@@ -429,7 +429,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
 
     fun parseTimeString(dateTimeString: String): String? {
         return try {
-            val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            val format = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
             val date = format.parse(dateTimeString) ?: return null
             val calendar = Calendar.getInstance().apply { time = date }
             val hour = calendar.get(Calendar.HOUR_OF_DAY)
@@ -533,7 +533,7 @@ class MainScreen : AppCompatActivity(), WeeklyCalendarFragment.OnDateSelectedLis
     }
 
     fun getCurrentTime(): String {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val dateFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
         val currentDate = Date()
         return dateFormat.format(currentDate)
     }

@@ -1,46 +1,73 @@
 package com.example.studywithswu
 
-import android.graphics.Color
-import android.view.LayoutInflater
-import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
-import com.example.studywithswu.databinding.ItemSubjectBinding
+import android.annotation.SuppressLint
+import android.os.Bundle
+import android.util.Log
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.firestore.FirebaseFirestore
+import java.text.SimpleDateFormat
+import java.util.*
 
-// Adapter에 List<Subject>을 전달받아서 RecyclerView에 표시
-class SubjectsAdapter(private val subjects: List<Subject>) : RecyclerView.Adapter<SubjectsAdapter.SubjectViewHolder>() {
+class SubjectsActivity : AppCompatActivity() {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SubjectViewHolder {
-        val binding = ItemSubjectBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return SubjectViewHolder(binding)
-    }
+    private val db = FirebaseFirestore.getInstance()
+    private lateinit var totalStudyTimeText: TextView
+    private lateinit var startTimes: MutableList<String>
+    private lateinit var stopTimes: MutableList<String>
+    private lateinit var subjectTextView: TextView
 
-    override fun onBindViewHolder(holder: SubjectViewHolder, position: Int) {
-        val subject = subjects[position]
-        holder.bind(subject)
-    }
+    @SuppressLint("MissingInflatedId")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_studyplanner) }}// XML 파일과 연결
 
-    override fun getItemCount(): Int = subjects.size
-
-    // ViewHolder에서 데이터를 바인딩합니다.
-    inner class SubjectViewHolder(private val binding: ItemSubjectBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(subject: Subject) {
-            // 과목명 표시
-            binding.subjectNameTextView.text = subject.name
-
-            // 과목 색상 표시
-            binding.subjectColorView.setBackgroundColor(Color.parseColor(subject.color))
-
-            // 타이머 시간 표시 (2025-02-03 날짜 기준으로 시간 가져오기)
-            val time = subject.time["2025-02-03"] ?: 0L  // 예시로 "2025-02-03" 날짜를 기준으로 시간 표시
-            binding.timeTextView.text = formatTime(time)
-        }
-    }
-
-    // 시간 포맷을 (HH:mm:ss) 형식으로 변환하는 함수
-    private fun formatTime(timeInMillis: Long): String {
-        val hours = (timeInMillis / (1000 * 60 * 60)).toInt()
-        val minutes = (timeInMillis / (1000 * 60) % 60).toInt()
-        val seconds = (timeInMillis / 1000 % 60).toInt()
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
-    }
-}
+//        totalStudyTimeText = findViewById(R.id.tv_total_study_time)
+//        subjectTextView = findViewById(R.id.tvSubjectName)
+//
+//        startTimes = mutableListOf()
+//        stopTimes = mutableListOf()
+//
+//        fetchSubjects()
+//        fetchTimetableData()
+//    }
+//
+//    private fun fetchSubjects() {
+//        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+//
+//        db.collection("subjects").get()
+//            .addOnSuccessListener { documents ->
+//                for (document in documents) {
+//                    val name = document.getString("name") ?: "Unknown"
+//                    val color = document.getString("color") ?: "#FFFFFF"
+//                    val timeMap = document.get("time") as? Map<String, Long> ?: emptyMap()
+//                    val studyTime = timeMap[currentDate] ?: 0
+//
+//                    Log.d("Firestore", "과목: $name, 색상: $color, 공부 시간: $studyTime 초")
+//
+//                    // UI 업데이트 (예제: TextView에 설정)
+//                    subjectTextView.append("$name\n")
+//
+//                    // 총 공부 시간 업데이트
+//                    val totalTime = totalStudyTimeText.text.toString().toIntOrNull() ?: 0
+//                    totalStudyTimeText.text = (totalTime + studyTime).toString()
+//                }
+//            }
+//            .addOnFailureListener { e -> Log.e("Firestore", "과목 데이터를 가져오는 데 실패함", e) }
+//    }
+//
+//    private fun fetchTimetableData() {
+//        db.collection("timetable").document("session")
+//            .get()
+//            .addOnSuccessListener { document ->
+//                if (document.exists()) {
+//                    startTimes = (document.get("start_times") as? List<String>)?.toMutableList() ?: mutableListOf()
+//                    stopTimes = (document.get("stop_times") as? List<String>)?.toMutableList() ?: mutableListOf()
+//
+//                    Log.d("Firestore", "시작 시간: $startTimes")
+//                    Log.d("Firestore", "종료 시간: $stopTimes")
+//                }
+//            }
+//            .addOnFailureListener { e -> Log.e("Firestore", "타임테이블 데이터를 가져오는 데 실패함", e) }
+//    }
+/*}*/

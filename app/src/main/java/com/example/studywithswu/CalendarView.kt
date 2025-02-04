@@ -51,18 +51,25 @@ class CalendarView : AppCompatActivity() {
         fetchStudyData(currentDate)
     }
 
+    private fun fetchStudyData(currentDate: String) {
+
+    }
+
     // Firestore에서 데이터 가져오기
-    private fun fetchStudyData(date: String) {
+    /*private fun fetchStudyData(date: String) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         db.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     val subjects = document.get("subjects") as? List<*>
                     val subjectList = subjects?.filterIsInstance<String>() ?: emptyList()
-                    val lastStudyTime = subjectList.lastOrNull() ?: "00:00:00"
+                    val lastStudyTime = subjectList.lastOrNull() ?: "0"
 
-                    Log.d("bbb", lastStudyTime)
-                    totalStudyTimeText.text = lastStudyTime
+                    Log.d("bbb", "subjects 값: $subjects")
+
+                    val longNumber:Long = lastStudyTime.toLongOrNull() ?: 0L
+                    totalStudyTimeText.text = formatTime(longNumber).toString()
+
                 } else {
                     totalStudyTimeText.text = "00:00:00"
                 }
@@ -71,8 +78,14 @@ class CalendarView : AppCompatActivity() {
                 Log.e("bbb", "데이터 가져오기 실패: ${e.message}")
                 totalStudyTimeText.text = "오류 발생"
             }
-    }
+    }*/
 
+    private fun formatTime(time: Long): String {
+        val seconds = (time / 1000) % 60
+        val minutes = (time / 1000 / 60) % 60
+        val hours = (time / 1000 / 60 / 60)
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+    }
 
     private fun fetchStartStopTimes(date: String) {
         var userId = FirebaseAuth.getInstance().currentUser?.uid?: return
@@ -84,7 +97,7 @@ class CalendarView : AppCompatActivity() {
                 val totalTime = document.getLong("totalTime_2025-02-04") ?: 0
 
                 // startTimeText는 첫 번째 값을, endTimeText는 마지막 값을 표시
-                totalStudyTimeText.text = totalTime.toString()
+                totalStudyTimeText.text = formatTime(totalTime)
                 startTimeText.text = start?.get(0) ?: "-"
                 endTimeText.text = end?.lastOrNull() ?: "공부 중.."
 
